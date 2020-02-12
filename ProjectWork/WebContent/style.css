@@ -30,6 +30,11 @@ body {
   color: white;
 }
 
+.profil_obere_mitte {
+	margin-left: auto;
+	margin-right: auto;
+}
+
 #suche {
 	display:table;
     margin-right:auto;

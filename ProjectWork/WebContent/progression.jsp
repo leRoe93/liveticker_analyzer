@@ -5,18 +5,16 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>DBAE Tutorium 07</title>
+<title>Progression</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
-<link rel="stylesheet" href="style.css">
 <div class="navigation">
 	<a href="index.jsp">Spielersuche</a>
   	<a href="nlp.jsp">NLP</a>
 </div>
-<!-- jQuery required by Bootstrap -->
-<script type="text/javascript" src="${ AppBase }/bower_components/jquery/dist/jquery.min.js"></script>
-<!-- Bootstrap CSS & JS -->
-<link rel="stylesheet" type="text/css" href="${ AppBase }/bower_components/bootstrap/dist/css/bootstrap.min.css">
-<script type="text/javascript" src="${ AppBase }/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
 <body>
 
 </body>
