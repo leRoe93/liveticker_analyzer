@@ -10,11 +10,23 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
-<div class="navigation">
-	<a href="index.jsp">Spielersuche</a>
-  	<a href="nlp.jsp">NLP</a>
-</div>
-<body>
+<nav id="nav" class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container-fluid">
+		<ul class="nav navbar-nav">
+      		<li><a href="index.jsp">Spielersuche</a></li>
+      		<li><a href="nlp.jsp">NLP</a></li>
+    	</ul>
 
+  	</div>
+</nav>
+<body>
+	<div class="jumbotron text-center">
+  		<h1>Gefundene Spieler mit absteigender Ähnlichkeit</h1>
+	</div>
+	<p>
+		<c:if test="${not empty search}">
+    		${search}
+		</c:if>
+	</p>
 </body>
 </html>

@@ -11,11 +11,38 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
 
-<div class="navigation">
-	<a href="index.jsp">Spielersuche</a>
-  	<a href="nlp.jsp">NLP</a>
-</div>
+<nav id="nav" class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container-fluid">
+		<ul class="nav navbar-nav">
+      		<li><a href="index.jsp">Spielersuche</a></li>
+      		<li><a href="nlp.jsp">NLP</a></li>
+    	</ul>
+
+  	</div>
+</nav>
 <body>
-Dies hier wird die Seite für die manuelle Eingabe von Live-Tickern zur Analyse!
+
+	<div class="jumbotron text-center">
+  		<h1>Input der Live-Ticker fuer NLP</h1>
+	</div>
+
+	<div class="form-group col-md-8 col-md-offset-3">
+		<form role="form" action="LiveTickerProcessorServlet" method="post">
+			<div class="row">
+				<div class="col-md-8">
+					<input class="form-control" type="text" placeholder="URL des zu analysierenden Live-Tickers">
+				</div>
+			</div>
+			<br>
+			<br>
+			<div class="row">
+				<div class="col-md-8">
+					<input class="form-control" type="text" placeholder="Einzelner Live-Ticker Eintrag">				
+				</div>
+			</div>
+				
+		</form>
+	</div>
+
 </body>
 </html>

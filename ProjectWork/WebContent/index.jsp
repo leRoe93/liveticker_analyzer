@@ -11,87 +11,75 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
 
-<div id="nav" class="navigation">
-	<a href="index.jsp">Spielersuche</a>
-  	<a href="nlp.jsp">NLP</a>
-</div>
+<nav id="nav" class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container-fluid">
+		<ul class="nav navbar-nav">
+      		<li><a href="index.jsp">Spielersuche</a></li>
+      		<li><a href="nlp.jsp">NLP</a></li>
+    	</ul>
+
+  	</div>
+</nav>
 <body>
+
 	<div class="jumbotron text-center">
-  		<h1>Parametrisierbare Suchanfrage</h1>
+  		<h1>Parametrisierbare Suchanfrage fuer Fussballspieler</h1>
 	</div>
-	<div class="container">
-		<div class="col-lg-12">
-			<form class="form-horizontal" role="form" action="QueryServlet" method="post">
-				<p class="help-block">Waehlen Sie die gewuenschten Eigenschaften des Spielers aus:</p>
-				<div class = "form-row">
-					<div class = "form-group col-md-6">
-						<label for = "alter">Alter</label>
-      					<select class="form-control" size="1" id="alter" name="alter">
-        					<option value ="1">1</option>
-        					<option value ="2">2</option>
-        					<option value ="3">3</option>
-						</select>
-					</div>
-					
-					<div class = "form-group col-md-6">
-						<label for = "geschlecht">Geschlecht</label>
-      					<select class="form-control" size="1" id="geschlecht" name="geschlecht">
-        					<option value ="1">maennlich</option>
-        					<option value ="2">weiblich</option>
-        					<option value ="3">divers</option>
-						</select>
-					</div>
-  				 </div>
-  				 
-  				 <div class = "form-row">
-					<div class = "form-group col-md-6">
-						<label for = "spielklasse">Spielklasse / Liga</label>
-      						<select class="form-control" size="1" name="spielklasse">
-        						<option value ="1">1. Bundesliga</option>
-        						<option value ="2">2. Bundesliga</option>
-        						<option value ="3">3. Bundesliga</option>
-        						<option value ="4">Regionalliga</option>
-							</select>
-					</div>
-					
-					<div class = "form-group col-md-6">
-						<label for = "bevourzugte_position">Bevorzugte Position</label>
-      					<select class="form-control" size="1" id="bevorzugte_position" name="bevorzugte_position">
-        					<option value ="1">Torwart</option>
-        					<option value ="2">Verteidigung</option>
-        					<option value ="3">Mittelfeld</option>
-        					<option value ="4">Sturm</option>
-						</select>
-					</div>
-  				 </div>
-  				 
-  				 <div class="range-field w-25">
-  				 
-  				 	<label for = "offensive">Offensive</label>
-  				 	<input class="border-0" type="range" min="0" max="100" />
-  				 
-  				 	<label for = "defensive">Defensive</label>
-  				 	<input class="border-0" type="range" min="0" max="100" />
-  				 	
-  				 	<label for = "zuspiele">Zuspiele</label>
-  				 	<input class="border-0" type="range" min="0" max="100" />
-  				 	
-  					 <label for = "vitalitaet">Vitalitaet</label>
-  				 	<input class="border-0" type="range" min="0" max="100" />
-  				 	
-  				 	<label for = "fairness">Fairness</label>
-  				 	<input class="border-0" type="range" min="0" max="100" />
-  				 	
-  				 	<label for = "zweikampf">Zweikampf</label>
-  				 	<input class="border-0" type="range" min="0" max="100" />
-  				 
-  				 </div>
-  				 
-      				
-				
+	
+	<div class="form-group col-md-8 col-md-offset-3">
+		<form role="form" action="QueryServlet" method="post">
+			
+			<div class="row">
+				<label class ="col-md-2" for = "age">Alter</label>
+				<label class ="col-md-2" for = "gender">Geschlecht</label>
+				<label class ="col-md-2" for = "league">Spielklasse / Liga</label>
+				<label class ="col-md-2" for = "preferred_position">Bevorzugte Position</label>
+			</div>
+			
+			<div class="row">
+				<div class="col-md-2">
+				<select class="form-control col-md-2" size="1" id="age" name="age">
+        			<% for( int i=1; i<=50; i++) { %>
+						<option value="<%=i %>"><%= i %></option>
+					<% } %>
+        					
+				</select>
+				</div>
+				<div class="col-md-2">
+				<select class="form-control" size="1" id="gender" name="gender">
+        			<option value ="male">maennlich</option>
+        			<option value ="female">weiblich</option>
+        			<option value ="diverse">divers</option>
+				</select>
+				</div>
+				<div class="col-md-2">
+      			<select class="form-control" size="1" name="league">
+        			<option value ="1. Bundesliga">1. Bundesliga</option>
+        			<option value ="2. Bundesliga">2. Bundesliga</option>
+        			<option value ="3. Bundesliga">3. Bundesliga</option>
+        			<option value ="Regionalliga">Regionalliga</option>
+				</select>
+				</div>
+				<div class="col-md-2">
+      			<select class="form-control col-md-2" size="1" id="preferred_position" name="preferred_position">
+        			<option value ="goalkeeper">Torwart</option>
+        			<option value ="defense">Verteidigung</option>
+        			<option value ="midfield">Mittelfeld</option>
+        			<option value ="storm">Sturm</option>
+				</select>
+				</div>
+			</div>
+			<br>
+			
+  			<div class="row">
+  				<button class="btn btn-primary" type="reset">Zuruecksetzen!</button>
 				<button class="btn btn-primary" type="submit">Suche!</button>
-			</form>
-		</div>
+  			</div>
+		</form>
 	</div>
+	
+	<div>
+	</div>
+
 </body>
 </html>

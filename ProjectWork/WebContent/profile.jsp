@@ -12,19 +12,21 @@
 </head>
 
 
-<div class="navigation">
-	<a href="index.jsp">Spielersuche</a>
-  	<a href="nlp.jsp">NLP</a>
-</div>
+<nav id="nav" class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container-fluid">
+		<ul class="nav navbar-nav">
+      		<li><a href="index.jsp">Spielersuche</a></li>
+      		<li><a href="nlp.jsp">NLP</a></li>
+    	</ul>
 
-
+  	</div>
+</nav>
 <body>
 
 
 <div class="jumbotron text-center">
   <h1>Spielerprofil von: [Platzhalter]</h1>
 </div>
-	<h1>Spielerprofil von: ###PLATZHALTER###</h1>
 	
 	<img align="left" id="profilbild" src="Pictures/profilbild.png"/>
 	
