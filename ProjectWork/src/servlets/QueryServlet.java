@@ -1,6 +1,9 @@
 package servlets;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -36,13 +39,22 @@ public class QueryServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		doGet(request, response);
 		
-		String search = "";
-
+		String search = "Die Suche mit folgenden Parametern:\n";
 		
-		search += request.getParameter("geschlecht");
-		request.setAttribute("geschlecht", search);
+		Map<String, String[]> parameterMap = request.getParameterMap();
+		for (String attribute : parameterMap.keySet()) {
+			search += "Attribut: " + attribute + ", Wert: ";
+			
+			
+			search += request.getAttribute(attribute) + "\n";
+				
+		}
+		System.out.println(request.getParameter("offensive"));
+		search += " ... ergab folgende Treffer:";
 		
-		request.getRequestDispatcher("/profile.jsp").forward(request, response);
+		request.setAttribute("search", search);
+		
+		request.getRequestDispatcher("/results.jsp").forward(request, response);
 	}
 
 }
