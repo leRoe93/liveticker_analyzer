@@ -1,1 +1,12 @@
 /* Currently not needed, because of bootstrap css source */
+
+.center-block {
+    float: none !important;
+}
+
+.fixed-ticker-entries {
+	height:100px;
+	overflow-y: scroll;
+	border:1px solid black;
+	
+}
