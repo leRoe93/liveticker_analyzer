@@ -24,8 +24,8 @@
   		<h1>Gefundene Spieler mit absteigender Ähnlichkeit</h1>
 	</div>
 	<p>
-		<c:if test="${not empty search}">
-    		${search}
+		<c:if test="${not empty results}">
+    		${results}
 		</c:if>
 	</p>
 </body>
