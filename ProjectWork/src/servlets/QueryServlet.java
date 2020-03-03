@@ -32,8 +32,8 @@ import de.dfki.mycbr.util.Pair;
 @WebServlet("/QueryServlet")
 public class QueryServlet extends HttpServlet {
 	private static String data_path = "/Users/tadeus/Desktop/";
-	private static String projectName = "projektarbeit_db.prj";
-	private static String conceptName = "spieler";
+	private static String projectName = "projectwork_db.prj";
+	private static String conceptName = "player";
 	
 	private static final long serialVersionUID = 1L;
        
@@ -71,7 +71,7 @@ public class QueryServlet extends HttpServlet {
 			myproject = new Project(data_path+projectName);
 			Concept myConcept = myproject.getConceptByID(conceptName);
 			
-			ICaseBase cb = myproject.getCB("spieler_datenbank");
+			ICaseBase cb = myproject.getCB("player_cb");
 			
 			
 			// Takes some time to load until access is possible
@@ -79,21 +79,23 @@ public class QueryServlet extends HttpServlet {
 				Thread.sleep(1000);
 			}
 			
+			
+			
 			Retrieval ret = new Retrieval(myConcept, cb);
 			ret.setRetrievalMethod(RetrievalMethod.RETRIEVE_SORTED);
 			Instance query = ret.getQueryInstance();
 			
 			
-			IntegerDesc ageDesc = (IntegerDesc) myConcept.getAllAttributeDescs().get("alter");
+			IntegerDesc ageDesc = (IntegerDesc) myConcept.getAllAttributeDescs().get("age");
 			query.addAttribute(ageDesc,ageDesc.getAttribute(age));
 			
-			SymbolDesc genderDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("geschlecht");
+			SymbolDesc genderDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("gender");
 			query.addAttribute(genderDesc,genderDesc.getAttribute(gender));
 			
-			SymbolDesc leagueDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("spielklasse");
+			SymbolDesc leagueDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("league");
 			query.addAttribute(leagueDesc,leagueDesc.getAttribute(league));
 			
-			SymbolDesc positionDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("bevorzugte_position");
+			SymbolDesc positionDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("preferred_position");
 			query.addAttribute(positionDesc,positionDesc.getAttribute(preferred_position));
 			
 			ret.start();
@@ -116,7 +118,7 @@ public class QueryServlet extends HttpServlet {
 					+ "<th>Ähnlichkeit</th>"
 					+ "</tr>");
 			
-			String[] resultAttributes = { "vorname", "name", "alter", "geschlecht", "spielklasse", "bevorzugte_position" };
+			String[] resultAttributes = { "first_name", "last_name", "age", "gender", "league", "preferred_position" };
 			
 			for (Pair<Instance, Similarity> pair : result) {
 				

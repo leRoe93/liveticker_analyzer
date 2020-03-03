@@ -18,8 +18,8 @@ import de.dfki.mycbr.core.model.Concept;
 @WebServlet("/ProfileServlet")
 public class ProfileServlet extends HttpServlet {
 	private static String data_path = "/Users/tadeus/Desktop/";
-	private static String projectName = "projektarbeit_db.prj";
-	private static String conceptName = "spieler";
+	private static String projectName = "projectwork_db.prj";
+	private static String conceptName = "player";
 	private static final long serialVersionUID = 1L;
        
     /**
@@ -59,21 +59,21 @@ public class ProfileServlet extends HttpServlet {
 			Instance instance = myproject.getInstance(request.getParameter("instance"));
 		
 			
-			request.setAttribute("first_name", instance.getAttForDesc(myConcept.getAttributeDesc("vorname")).getValueAsString());
-			request.setAttribute("last_name", instance.getAttForDesc(myConcept.getAttributeDesc("name")).getValueAsString());
-			request.setAttribute("gender", instance.getAttForDesc(myConcept.getAttributeDesc("geschlecht")).getValueAsString());
-			request.setAttribute("age", instance.getAttForDesc(myConcept.getAttributeDesc("alter")).getValueAsString());
-			request.setAttribute("current_club", instance.getAttForDesc(myConcept.getAttributeDesc("aktueller_verein")).getValueAsString());
-			request.setAttribute("preferred_position", instance.getAttForDesc(myConcept.getAttributeDesc("bevorzugte_position")).getValueAsString());
-			request.setAttribute("league", instance.getAttForDesc(myConcept.getAttributeDesc("spielklasse")).getValueAsString());
+			request.setAttribute("first_name", instance.getAttForDesc(myConcept.getAttributeDesc("first_name")).getValueAsString());
+			request.setAttribute("last_name", instance.getAttForDesc(myConcept.getAttributeDesc("last_name")).getValueAsString());
+			request.setAttribute("gender", instance.getAttForDesc(myConcept.getAttributeDesc("gender")).getValueAsString());
+			request.setAttribute("age", instance.getAttForDesc(myConcept.getAttributeDesc("age")).getValueAsString());
+			request.setAttribute("current_club", instance.getAttForDesc(myConcept.getAttributeDesc("current_club")).getValueAsString());
+			request.setAttribute("preferred_position", instance.getAttForDesc(myConcept.getAttributeDesc("preferred_position")).getValueAsString());
+			request.setAttribute("league", instance.getAttForDesc(myConcept.getAttributeDesc("league")).getValueAsString());
 			request.setAttribute("offensive", instance.getAttForDesc(myConcept.getAttributeDesc("offensive")).getValueAsString());
 			request.setAttribute("defensive", instance.getAttForDesc(myConcept.getAttributeDesc("defensive")).getValueAsString());
 			request.setAttribute("fairplay", instance.getAttForDesc(myConcept.getAttributeDesc("fairplay")).getValueAsString());
-			request.setAttribute("duels", instance.getAttForDesc(myConcept.getAttributeDesc("zweikampf")).getValueAsString());
-			request.setAttribute("vitality", instance.getAttForDesc(myConcept.getAttributeDesc("vitalitaet")).getValueAsString());
-			request.setAttribute("passes", instance.getAttForDesc(myConcept.getAttributeDesc("zuspiele")).getValueAsString());
-			request.setAttribute("player_id", instance.getAttForDesc(myConcept.getAttributeDesc("spieler_id")).getValueAsString());
-			request.setAttribute("ticker_entries", instance.getAttForDesc(myConcept.getAttributeDesc("ticker_eintraege")).getValueAsString().split(";"));
+			request.setAttribute("duels", instance.getAttForDesc(myConcept.getAttributeDesc("duels")).getValueAsString());
+			request.setAttribute("vitality", instance.getAttForDesc(myConcept.getAttributeDesc("vitality")).getValueAsString());
+			request.setAttribute("passes", instance.getAttForDesc(myConcept.getAttributeDesc("passing")).getValueAsString());
+			request.setAttribute("player_id", instance.getAttForDesc(myConcept.getAttributeDesc("player_id")).getValueAsString());
+			request.setAttribute("ticker_entries", instance.getAttForDesc(myConcept.getAttributeDesc("ticker_entries")).getValueAsString().split(";"));
 			
 			
 
