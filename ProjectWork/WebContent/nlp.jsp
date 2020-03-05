@@ -30,16 +30,14 @@
 		<form role="form" action="LiveTickerProcessorServlet" method="post">
 			<div class="row">
 				<div class="col-md-8">
-					<input class="form-control" type="text" placeholder="URL des zu analysierenden Live-Tickers">
+					<input name="url_lt" class="form-control" type="text" placeholder="URL des zu analysierenden Live-Tickers">
 				</div>
 			</div>
 			<br>
-			<br>
+
 			<div class="row">
-				<div class="col-md-8">
-					<input class="form-control" type="text" placeholder="Einzelner Live-Ticker Eintrag">				
-				</div>
-			</div>
+				<button class="btn btn-primary" type="submit">Auf geht's!</button>
+  			</div>
 				
 		</form>
 	</div>

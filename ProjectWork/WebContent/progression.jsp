@@ -21,6 +21,14 @@
   	</div>
 </nav>
 <body>
+	<div class="jumbotron text-center">
+  		<h1>Verarbeitung der Live-Ticker Einträge</h1>
+	</div>
+	<p>
+		<c:if test="${not empty tickerEntries}">
+    		${tickerEntries}
+		</c:if>
+	</p>
 
 </body>
 </html>
