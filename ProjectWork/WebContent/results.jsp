@@ -15,6 +15,7 @@
 		<ul class="nav navbar-nav">
       		<li><a href="index.jsp">Spielersuche</a></li>
       		<li><a href="nlp.jsp">NLP</a></li>
+      		<li><a href="addPlayer.jsp">Spieler hinzufügen</a></li>
     	</ul>
 
   	</div>
