@@ -15,22 +15,29 @@ public class GameSituation {
 	 * attitude; private Action specificAction;
 	 */
 	
-	
-	private ArrayList<String> playerProposals;
-	private ArrayList<String> actionProposals;
-	
-	
-	
-	public ArrayList<String> getPlayerProposals() {
-		return playerProposals;
+	private Player actor;
+	private Action action;
+	public GameSituation() {
+		super();
+		
 	}
-	public void setPlayerProposals(ArrayList<String> playerProposals) {
-		this.playerProposals = playerProposals;
+	public GameSituation(Player actor, Action action) {
+		super();
+		this.actor = actor;
+		this.action = action;
 	}
-	public ArrayList<String> getActionProposals() {
-		return actionProposals;
+	public Player getActor() {
+		return actor;
 	}
-	public void setActionProposals(ArrayList<String> actionProposals) {
-		this.actionProposals = actionProposals;
+	public void setActor(Player actor) {
+		this.actor = actor;
 	}
+	public Action getAction() {
+		return action;
+	}
+	public void setAction(Action action) {
+		this.action = action;
+	} 
+	
+	
 }

@@ -2,6 +2,7 @@ package servlets;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -19,7 +20,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import datastructure.Action;
 import datastructure.GameSituation;
+import datastructure.Player;
 import de.dfki.mycbr.core.ICaseBase;
 import de.dfki.mycbr.core.Project;
 import de.dfki.mycbr.core.casebase.Instance;
@@ -93,18 +96,18 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 			}
 			
 			
-			// .substring(content.indexOf("|") + 2).replaceAll("<[^>]*>", "")
-			
 		}
 		
-		// Dynamic table creation for results.jsp
+		// Dynamic table creation for progression.jsp
 		StringBuilder tableContent = new StringBuilder();
 
-		tableContent.append("<table class='table' id='tickerEntries'>");
-		tableContent.append("<tr>" + "<th>Ticker Eintrag</th>" + "<th>Erkannte Spieler</th>" + "<th>Erkannte Situation</th>" + "</tr>");
-		
-		int limiter = 10;
+		tableContent.append("<table class='table table-striped table-bordered table-hover' id='tickerEntries'>");
+		tableContent.append("<thead class='thead-dark'><tr>" + "<th style='width:33,33%'>Ticker Eintrag</th>" + "<th style='width:33,33%'>Aktionen zu Spielern aus DB</th>" + "<th style='width:33,33%'>Aktionskandidaten</th>" + "</tr></thead>");
+		tableContent.append("<tbody>");
+		int limiter = 1000;
 		int iterator = 1;
+		
+		ArrayList<String> playersInDb = getPlayersFromDbAsList();
 		
 		for (String entry : tickerEntries) {
 			
@@ -113,17 +116,32 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 				break;
 			}
 			
-			GameSituation sit = generateGameSituation(entry);
+			HashMap<String, ArrayList<GameSituation>> situations = generateGameSituation(entry, playersInDb);
+			
+			StringBuilder inDbContent = new StringBuilder("<ul>");
+			StringBuilder notInDbContent = new StringBuilder("<ul>");
 
+			for (GameSituation sitInDb : situations.get("inDb")) {
+				inDbContent.append("<li>Spieler: " + sitInDb.getActor().getLastName() + ", Aktion: " + sitInDb.getAction().getIdentifier() + "</li>");
+				
+			}
+			for (GameSituation sitNotInDb : situations.get("notInDb")) {
+				notInDbContent.append("<li>Spieler: " + sitNotInDb.getActor().getLastName() + ", Aktion: " + sitNotInDb.getAction().getIdentifier() + "</li>");
+
+			}
+			
+			inDbContent.append("</ul>");
+			notInDbContent.append("</ul>");
+			
 			tableContent.append("<tr>");
-			tableContent.append("<td>" + entry + "</td>");
-			tableContent.append("<td>" + sit.getPlayerProposals() + "</td>");
-			tableContent.append("<td>" + sit.getActionProposals() + "</td>");
+			tableContent.append("<td style='width:33,33%'>" + entry + "</td>");
+			tableContent.append("<td style='width:33,33%'>" + inDbContent + "</td>");
+			tableContent.append("<td style='width:33,33%'>" + notInDbContent + "</td>");
 
 			tableContent.append("</tr>");
 			iterator++;
 		}
-
+		tableContent.append("</tbody>");
 		tableContent.append("</table>");
 
 		request.setAttribute("tickerEntries", tableContent);
@@ -132,54 +150,137 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 	}
 	// NLP Logic to convert the string into a structured form
 	// Shall return a gamesituation in the future
-	private GameSituation generateGameSituation(String tickerEntry) {
-		GameSituation sit = new GameSituation();
-
+	private HashMap<String, ArrayList<GameSituation>> generateGameSituation(String tickerEntry, ArrayList<String> playersInDb) {
+		
+		
+		// Initialize a HashMap that contains detected situations separated by the key indicating, if the affected player exists in the DB
+		HashMap<String, ArrayList<GameSituation>> situations = new HashMap<String, ArrayList<GameSituation>>();
+		situations.put("inDb", new ArrayList<GameSituation>());
+		situations.put("notInDb", new ArrayList<GameSituation>());
+		
+		
+		// Initialize Stanford Core NLP pipeline with german properties and a specific ticker entry as content
 		CoreDocument document = new CoreDocument(tickerEntry);
 		Properties germanProperties = StringUtils
 				.argsToProperties(new String[] { "-props", "StanfordCoreNLP-german.properties" });
 		StanfordCoreNLP pipeline = new StanfordCoreNLP(germanProperties);
 
+		// Do all kinds of possible annotations for the german language
 		pipeline.annotate(document);
 
 		// Always second one, because first one contains the minute.
 		CoreSentence sent = document.sentences().get(1);
-		/*
-		 * System.out.println("This is the sentence: " + sent.text());
-		 * System.out.println("These are the POS tags: " + sent.posTags());
-		 * System.out.println("These are the NER tags: " + sent.nerTags());
-		 * System.out.println("This is the constituencyParse: " +
-		 * sent.constituencyParse()); System.out.println("This is the dependencyParse: "
-		 * + sent.dependencyParse());
-		 * System.out.println("These are the entity mentions");
-		 */
 
-		List<CoreLabel> tokens = sent.tokens();
 		
-		ArrayList<String> playerProposals = new ArrayList<String>();
-        ArrayList<String> actionProposals = new ArrayList<String>();
+		// Tokens represent the single words in a sentence
+        List<CoreLabel> tokens = sent.tokens();
+        
+        // POS Tags represent the "kind" of word, e.g. NE = Named Entity
+    	List<String> posTags = sent.posTags();
+    	
+    	
+    	
+    	String potentialPlayer = "";
+    	String actionIdentifier = "";
+    	boolean entityExistsInDb = false;
+    	
+    	for (int i = 0; i < tokens.size(); i++) {
+    		boolean situationDefined = false;
+    		
+    		// Current token is a named entity and thus potentially a player
+    		if (posTags.get(i).equals("NE")) {
+    			
+    			// Initialize a GameSituation that gets specified later on
+    			GameSituation sit = new GameSituation();
+    			
+    			// Get the potential player name from the named entity, regardless if it is a player or not
+    			potentialPlayer = tokens.get(i).toString().substring(0, tokens.get(i).toString().indexOf("-"));
+    			
+    			System.out.println("Current token: " + potentialPlayer + " is a Named Entity!");
+    			// Iterate over all players in DB and check if one of them matches the current candidate
+    			for (String player : playersInDb) {
+    				// System.out.println("Comparing '" + potentialPlayer + "' with '" + player + "'");
+    				if (player.equals(potentialPlayer)) {
+    					entityExistsInDb = true;
+    					System.out.println("It also exists in the Database!");
+    				}
+    			}
+    			
+    			if (!entityExistsInDb) {
+    				System.out.println("It does not exist in the Database!");
+    			}
+    			
+    			// If there is a word before this named entity
+				if ((i - 1) >= 0) {
+					System.out.println("There is a word preceeding this entity!");
+					// If the preceeding token is a preposition we might detect an action by going further
+					if (posTags.get(i - 1).equals("APPR")) {
+						System.out.println("It is a preposition!");
+						// If there is a word before this preposition
+						if ((i - 2) >= 0) {
+							System.out.println("There is a further word, preceeding the preposition!");
+							// If this word is a noun, it is regarded as an action
+							if (posTags.get(i - 2).equals("NN")) {
+								System.out.println("It is a noun!");
+								actionIdentifier = tokens.get(i - 2).toString().substring(0,
+										tokens.get(i - 2).toString().indexOf("-"));
 
-		for (int i = 0; i < tokens.size(); i++) {
-			String token = tokens.get(i).toString();
-			String posTag = sent.posTags().get(i).toString();
-			// System.out.println(token.substring(0, token.indexOf("-")) + " is a " +
-			// sent.posTags().get(i).toString());
+								System.out.println("Found a nominative illustration of situation");
+								System.out.println("Player: " + potentialPlayer);
+								System.out.println("Action: " + actionIdentifier);
 
-			if (posTag.equals("NE")) {
-				playerProposals.add(token.substring(0, token.indexOf("-")));
-			} else if (posTag.contentEquals("NN") || posTag.equals("VVFIN")) {
-				actionProposals.add(token.substring(0, token.indexOf("-")));
-			}
-		}
+								sit = new GameSituation(new Player(potentialPlayer), new Action(actionIdentifier));
+								situationDefined = true;
+								
+							}
+						}
+					}
+				}
+				
+				// If there is word after this named entity 
+				if ((i + 1) < tokens.size() && situationDefined == false) {
+					System.out.println("There is a word following this entity and no situation is defined yet.");
+					// If the following token is a verb, it is regarded as an action
+					if (posTags.get(i + 1).equals("VVFIN")) {
+						actionIdentifier = tokens.get(i + 1).toString().substring(0,
+								tokens.get(i + 1).toString().indexOf("-"));
+
+						System.out.println("Found a verb illustration of situation");
+						System.out.println("Player: " + potentialPlayer);
+						System.out.println("Action: " + tokens.get(i + 1));
+
+						sit = new GameSituation(new Player(potentialPlayer), new Action(actionIdentifier));
+						situationDefined = true;
+					}
+				} else {
+					System.out.println("No possibility to find a situation!");
+				}
+				
+				
+				if (situationDefined == true) {
+					System.out.println("A situation has been defined during this iteration!");
+					// Depending on the database the situation gets added to specific list
+					if (entityExistsInDb) {
+						System.out.println("Adding situation into existing content");
+						situations.get("inDb").add(sit);
+					} else {
+						System.out.println("Adding situation into non-existing content");
+						situations.get("notInDb").add(sit);
+					}
+				}
+
+    		} 
+    		
+    		
+    	}
 		
-		sit.setPlayerProposals(playerProposals);
-		sit.setActionProposals(actionProposals);
 		
-		return sit;
+		
+		return situations;
 	}
 	
-	private void entityCleanUp(ArrayList<String> playerProposals) {
-		
+	private ArrayList<String> getPlayersFromDbAsList() {
+		ArrayList<String> players = new ArrayList<String>();
 		// MyCBR setup
 		Project myproject;
 		try {
@@ -193,21 +294,20 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 				Thread.sleep(1000);
 			}
 			
-			String suffix = "[Nicht_in_DB]";
-			for (int i = 0; i < playerProposals.size(); i++) {
-				for (Instance instance : myproject.getAllInstances()) {
-					if (playerProposals.get(i).contains(instance.getAttForDesc(myConcept.getAttributeDesc("last_name")).getValueAsString())) {
-						System.out.println("MUSS NOCH ÜBERDACHT WERDEN!");
-					}
-				}
-				
-				playerProposals.get(i).concat(suffix);
+			Collection<Instance> allInstances = cb.getCases();
+			
+			for (Instance instance : allInstances) {
+				players.add(instance.getAttForDesc(myConcept.getAttributeDesc("last_name")).getValueAsString());
 			}
-
+			
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			
 		}
+		
+		return players;
 
 	}
 	
