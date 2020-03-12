@@ -85,7 +85,7 @@ public class QueryServlet extends HttpServlet {
 			ret.setRetrievalMethod(RetrievalMethod.RETRIEVE_SORTED);
 			Instance query = ret.getQueryInstance();
 			
-			
+			// Adding attributes to the query
 			IntegerDesc ageDesc = (IntegerDesc) myConcept.getAllAttributeDescs().get("age");
 			query.addAttribute(ageDesc,ageDesc.getAttribute(age));
 			
@@ -100,7 +100,7 @@ public class QueryServlet extends HttpServlet {
 			
 			ret.start();
 			
-			// get the retrieval result
+		
 			List<Pair<Instance, Similarity>> result = ret.getResult();
 
 			// Dynamic table creation for results.jsp

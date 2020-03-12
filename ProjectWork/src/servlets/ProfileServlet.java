@@ -75,7 +75,12 @@ public class ProfileServlet extends HttpServlet {
 			request.setAttribute("player_id", instance.getAttForDesc(myConcept.getAttributeDesc("player_id")).getValueAsString());
 			request.setAttribute("ticker_entries", instance.getAttForDesc(myConcept.getAttributeDesc("ticker_entries")).getValueAsString().split(";"));
 			
+			String buttonHtml = "<form action=DeletePlayerServlet method=post> "	
+					+ "<input type='hidden' name='instance' value='" + instance.getName() + "'/>"
+					+ "<input type='submit' value='Spieler loeschen!'>"
+					+ "</form>";
 			
+			request.setAttribute("deleteButton", buttonHtml);
 
 			request.getRequestDispatcher("/profile.jsp").forward(request, response);
 			
