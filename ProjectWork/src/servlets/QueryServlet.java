@@ -108,7 +108,7 @@ public class QueryServlet extends HttpServlet {
 			
 			tableContent.append("<table class='table' id='resultTable'>");
 			tableContent.append("<tr>"
-					+ "<th></th>"
+					+ "<th>Profillink</th>"
 					+ "<th>Vorname</th>"
 					+ "<th>Nachname</th>"
 					+ "<th>Alter</th>"
@@ -126,7 +126,7 @@ public class QueryServlet extends HttpServlet {
 				tableContent.append("<td>"
 						+ "<form action=ProfileServlet method=post> "	
 						+ "<input type='hidden' name='instance' value='" + pair.getFirst().getName() + "'/>"
-						+ "<input type='submit' value='Zum Profil'>"
+						+ "<button class='btn btn-success btn-link'>Zum Profil</button>"
 						+ "</form>"
 						+ "</td>");
 				
