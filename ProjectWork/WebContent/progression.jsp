@@ -8,6 +8,8 @@
 <title>Progression</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<!-- custom css file -->
+<link rel="stylesheet" href="style.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
@@ -23,7 +25,16 @@
 </nav>
 <body>
 	<div class="jumbotron text-center">
-  		<h1>Verarbeitung der Live-Ticker Einträge</h1>
+  		<h2>Resultate aus der Live-Ticker-Analyse</h2>
+
+		<p>
+		--> Spalte 1: Direkt uebernommene Eintraege aus Live-Ticker <br/>
+		--> Spalte 2: Erkannte Entitaeten in Zusammenhang mit einem Nomen oder einem Verb stellen potenzielle Aktionen dar<br/>
+		--> Spalte 3: Gefilterte potenzielle Aktionen durch Abgleich der Entitaeten mit der Spielerdatenbank<br/>
+		--> Spalte 4: Attribut, welches sich durch die erkannte Situation bei dem erkannten Spieler veraendert<br/>
+		</p>
+				
+		<p>Die Resultate wurden aus <a href='${ticker_url}'>DIESEM</a> Live-Ticker abgeleitet.</p>
 	</div>
 	
 	<div class="container">

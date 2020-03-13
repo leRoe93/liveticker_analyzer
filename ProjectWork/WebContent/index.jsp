@@ -24,9 +24,12 @@
 <body>
 
 	<div class="jumbotron text-center">
-  		<h1>Parametrisierbare Suchanfrage fuer Fussballspieler</h1>
+  		<h2>Parametrisierbare Suchanfrage fuer Fussballspieler</h2>
+  		<p>Spezifizieren Sie Parameter, um passende Spieler zu finden! <br/>
+  		Waehlen Sie die Expertenansicht fuer eine erweiterte Suche!</p>
 	</div>
 	
+	<!-- Width is always 12 -->
 	<div class="form-group col-md-8 col-md-offset-3">
 		<form role="form" action="QueryServlet" method="post">
 			
@@ -72,9 +75,9 @@
 			</div>
 			<br>
 			
-  			<div class="row">
-  				<button class="btn btn-primary" type="reset">Zuruecksetzen!</button>
-				<button class="btn btn-primary" type="submit">Suche!</button>
+  			<div class="container">
+  				<button class="btn btn-danger" type="reset">Zuruecksetzen!</button>
+				<button class="btn btn-success" type="submit">Suche!</button>
   			</div>
 		</form>
 	</div>

@@ -9,3 +9,33 @@
 	border:1px solid black;
 	
 }
+
+.centered-element {
+	margin:auto;
+}
+
+#ballGif {
+	display:none;
+}
+th {
+	/* same color as bootstrap success class */
+    background-color: #5cb85c;
+    text-align: center; 
+}
+td {
+	text-align: center;
+}
+td.entry {
+	width: 40%;
+}
+td.info {
+	width: 20%;
+}
+.table-borderless > tbody > tr > td,
+.table-borderless > tbody > tr > th,
+.table-borderless > tfoot > tr > td,
+.table-borderless > tfoot > tr > th,
+.table-borderless > thead > tr > td,
+.table-borderless > thead > tr > th {
+    border: none;
+}

@@ -24,47 +24,58 @@
 <body>
 
 	<div class="jumbotron text-center">
-  		<h1>Füge neue Spieler anhand eines fussball.de Profils hinzu!</h1>
-	</div>
-
-	<div class="form-group col-md-8 col-md-offset-3">
-		<form role="form" action="ProfileToFormServlet" method="post">
-			<div class="row">
-				<div class="col-md-8">
-					<input name="url_profile" class="form-control" type="text" placeholder="URL des zu analysierenden fussball.de Profils">
-				</div>
-			</div>
-			<br>
-
-			<div class="row">
-				<button class="btn btn-primary" type="submit">Profil verarbeiten!</button>
-  			</div>
-				
-		</form>
+  		<h2>Fuege neue Spieler anhand eines fussball.de Profils hinzu!</h2>
 	</div>
 	
-	<div class="form-group col-md-8 col-md-offset-3">
-		<form role="form" action="CreateCaseServlet" method="post">
-			<div class="row">
-				<div class="col-md-8">
-					<label for="first_name">Vorname:<input name="first_name" class="form-control" type="text" placeholder= "z.B. 'Max'" value= ${firstName }></label>
-					<label for="last_name">Nachname<input name="last_name" class="form-control" type="text" placeholder= "z.B. 'Mustermann'"value= ${lastName }></label>
-					<label for="gender">Geschlecht:<input name="gender" class="form-control" type="text" placeholder= "z.B. 'maennlich'" value= ${gender }></label>
-					<label for="birthday">Geburtstag:<input name="birthday" class="form-control" type="text" placeholder= "z.B. '01.01.2000'" value= ${birthday }></label>
-					<label for="current_club">Aktueller Verein:<input name="current_club" class="form-control" placeholder= "z.B. 'FC Musterstadt'" type="text" value= ${currentClub }></label>
-					<label for="league">Spielklasse:<input name="league" class="form-control" type="text" placeholder= "z.B. '1. Bundesliga'"></label>	
-					<label for="preferred_position">Bevorzugte Position:<input name="preferred_position" class="form-control" type="text" placeholder= "z.B. 'Mittelfeld'"></label>	
-					
+	<div class="container text-center">
+		<div class="form-group">
+			<form role="form" action="ProfileToFormServlet" method="post">
+				<div class="row">
+					<div class="col">
+						<input name="url_profile" class="form-control text-center" type="url" placeholder="URL des zu analysierenden fussball.de Profils">
+					</div>
 				</div>
+				<br/>
+				<div class="row text-center">
+
+					<button class="btn btn-success" type="submit">Profil verarbeiten!</button>
+
+				</div>
+
+
+
+			</form>
+		</div>
+	</div>
+
+	<div class="container form-group text-center">
+		<form role="form" action="CreateCaseServlet" method="post">
+			<div class="row col-md-12">
+				
+					<label for="first_name">Vorname:<input required name="first_name" class="form-control" type="text" placeholder= "z.B. 'Max'" value= ${firstName }></label>
+					<label for="last_name">Nachname:<input required name="last_name" class="form-control" type="text" placeholder= "z.B. 'Mustermann'"value= ${lastName }></label>
+					<label for="gender">Geschlecht:<input required name="gender" class="form-control" type="text" placeholder= "z.B. 'maennlich'" value= ${gender }></label>
+					<label for="birthday">Geburtstag:<input required name="birthday" class="form-control" type="text" placeholder= "z.B. '01.01.2000'" value= ${birthday }></label>
+					<label for="current_club">Aktueller Verein:<input name="current_club" class="form-control" placeholder= "z.B. 'FC Musterstadt'" type="text" value= ${currentClub }></label>
+					
+				
 			</div>
-			<br>
+			<div class="row col-md-12">
+			
+					<label for="league">Spielklasse:<input required name="league" class="form-control" type="text" placeholder= "z.B. '1. Bundesliga'"></label>	
+					<label for="preferred_position">Bevorzugte Position:<input required name="preferred_position" class="form-control" type="text" placeholder= "z.B. 'Mittelfeld'"></label>	
+					
+				
+			</div>
 
 			<div class="row">
-				<button class="btn btn-primary" type="submit">Spieler anlegen!</button>
+				<button class="btn btn-danger" type="reset">Zuruecksetzen!</button>
+				<button class="btn btn-success" type="submit">Spieler anlegen!</button>
   			</div>
 				
 		</form>
 	</div>
+
 	
 	<div class="container">
 		<c:if test="${not empty success}">

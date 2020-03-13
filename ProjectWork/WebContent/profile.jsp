@@ -28,7 +28,7 @@
 
 
 <div class="jumbotron text-center">
-  <h1>Spielerprofil von: ${first_name} ${last_name}</h1>
+  <h2>Spielerprofil von: ${first_name} ${last_name}</h2>
 </div>
 
 <div class="container">

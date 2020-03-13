@@ -7,6 +7,8 @@
 <title>NLP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<!-- custom css file -->
+<link rel="stylesheet" href="style.css" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
@@ -24,24 +26,53 @@
 <body>
 
 	<div class="jumbotron text-center">
-  		<h1>Input der Live-Ticker fuer NLP</h1>
+		<h2>Verarbeitung von Live-Tickern mittels NLP</h2>
+		<p>
+			Auf dieser Seite ist es moeglich, einen URL zu einem bestimmten
+			Live-Ticker automatisch<br /> untersuchen und somit einzelne
+			Spielaktionen mit den betroffenen Spielern zu erkennen.<br /> -->
+			Momentan nur Live-Ticker von <a
+				href="http://www.sportal.de/live-ticker/fussball-live/">sportal</a>
+			unterstuetzt!
+		</p>
 	</div>
 
-	<div class="form-group col-md-8 col-md-offset-3">
-		<form role="form" action="LiveTickerProcessorServlet" method="post">
-			<div class="row">
-				<div class="col-md-8">
-					<input name="url_lt" class="form-control" type="text" placeholder="URL des zu analysierenden Live-Tickers">
+
+	<div class="container text-center">
+		<div class="form-group">
+			<form role="form" action="LiveTickerProcessorServlet" method="post">
+				<div class="row">
+					<div class="col">
+						<input name="url_lt" class="form-control text-center" type="url"
+							placeholder="URL des zu analysierenden Live-Tickers">
+					</div>
 				</div>
-			</div>
-			<br>
+				<br>
 
-			<div class="row">
-				<button class="btn btn-primary" type="submit">Auf geht's!</button>
-  			</div>
-				
-		</form>
+				<div id="ballGif" class="text-center">
+					<img src="https://media.giphy.com/media/WvuTFk2IN7jxoLVDkP/giphy.gif"></img>
+					<p>Bitte warten, dies kann einige Minuten dauern...</p>
+				</div>
+				<div class="row">
+
+					<button onclick="showGif()" class="btn btn-success" type="submit">
+						<img src="https://image.flaticon.com/icons/svg/53/53283.svg" width="20" /> Auf geht's!
+					</button>
+
+				</div>
+
+
+
+			</form>
+		</div>
 	</div>
+
 
 </body>
+
+<script>
+function showGif() {
+    document.getElementById("ballGif").style.display = "block";
+}
+</script>
 </html>
