@@ -19,6 +19,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.languagetool.AnalyzedSentence;
+import org.languagetool.AnalyzedTokenReadings;
+import org.languagetool.JLanguageTool;
+import org.languagetool.language.GermanyGerman;
 
 import datastructure.Action;
 import datastructure.GameSituation;
@@ -97,14 +101,19 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 			
 			
 		}
+		JLanguageTool languagetool = new JLanguageTool(new GermanyGerman());
+		
+		Properties germanProperties = StringUtils
+				.argsToProperties(new String[] { "-props", "StanfordCoreNLP-german.properties" });
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(germanProperties);
 		
 		// Dynamic table creation for progression.jsp
 		StringBuilder tableContent = new StringBuilder();
 
 		tableContent.append("<table class='table table-striped table-bordered table-hover' id='tickerEntries'>");
-		tableContent.append("<thead class='thead-dark'><tr>" + "<th style='width:33,33%'>Ticker Eintrag</th>" + "<th style='width:33,33%'>Aktionen zu Spielern aus DB</th>" + "<th style='width:33,33%'>Aktionskandidaten</th>" + "</tr></thead>");
+		tableContent.append("<thead class='thead-dark'><tr>" + "<th>Prozessierter Ticker Eintrag</th>" + "<th>Potenzielle Aktionen</th>" + "<th>Verwertete Aktionen</th>" +  "<th>Betroffenes Attribut</th>" + "</tr></thead>");
 		tableContent.append("<tbody>");
-		int limiter = 1000;
+		int limiter = 10;
 		int iterator = 1;
 		
 		ArrayList<String> playersInDb = getPlayersFromDbAsList();
@@ -116,27 +125,28 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 				break;
 			}
 			
-			HashMap<String, ArrayList<GameSituation>> situations = generateGameSituation(entry, playersInDb);
+			HashMap<String, ArrayList<GameSituation>> situations = generateGameSituation(entry, playersInDb, pipeline, languagetool);
 			
-			StringBuilder inDbContent = new StringBuilder("<ul>");
-			StringBuilder notInDbContent = new StringBuilder("<ul>");
+			StringBuilder inDbContent = new StringBuilder("<ol>");
+			StringBuilder notInDbContent = new StringBuilder("<ol>");
 
 			for (GameSituation sitInDb : situations.get("inDb")) {
-				inDbContent.append("<li>Spieler: " + sitInDb.getActor().getLastName() + ", Aktion: " + sitInDb.getAction().getIdentifier() + "</li>");
+				inDbContent.append("<li>Entitaet: " + sitInDb.getActor().getLastName() + "<br/>Aktion: " + sitInDb.getAction().getIdentifier() + "</li>");
 				
 			}
 			for (GameSituation sitNotInDb : situations.get("notInDb")) {
-				notInDbContent.append("<li>Spieler: " + sitNotInDb.getActor().getLastName() + ", Aktion: " + sitNotInDb.getAction().getIdentifier() + "</li>");
+				notInDbContent.append("<li>Entitaet: " + sitNotInDb.getActor().getLastName() + "<br/>Aktion: " + sitNotInDb.getAction().getIdentifier() + "</li>");
 
 			}
 			
-			inDbContent.append("</ul>");
-			notInDbContent.append("</ul>");
+			inDbContent.append("</ol>");
+			notInDbContent.append("</ol>");
 			
 			tableContent.append("<tr>");
-			tableContent.append("<td style='width:33,33%'>" + entry + "</td>");
-			tableContent.append("<td style='width:33,33%'>" + inDbContent + "</td>");
-			tableContent.append("<td style='width:33,33%'>" + notInDbContent + "</td>");
+			tableContent.append("<td class='entry'>" + entry + "</td>");
+			tableContent.append("<td class='info'>" + notInDbContent + "</td>");
+			tableContent.append("<td class='info'>" + inDbContent + "</td>");
+			tableContent.append("<td class='info'>In Arbeit ...</td>");
 
 			tableContent.append("</tr>");
 			iterator++;
@@ -144,13 +154,14 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 		tableContent.append("</tbody>");
 		tableContent.append("</table>");
 
+		request.setAttribute("ticker_url", request.getParameter("url_lt"));
 		request.setAttribute("tickerEntries", tableContent);
 		
 		request.getRequestDispatcher("progression.jsp").forward(request, response);
 	}
 	// NLP Logic to convert the string into a structured form
 	// Shall return a gamesituation in the future
-	private HashMap<String, ArrayList<GameSituation>> generateGameSituation(String tickerEntry, ArrayList<String> playersInDb) {
+	private HashMap<String, ArrayList<GameSituation>> generateGameSituation(String tickerEntry, ArrayList<String> playersInDb, StanfordCoreNLP pipeline, JLanguageTool languagetool) {
 		
 		
 		// Initialize a HashMap that contains detected situations separated by the key indicating, if the affected player exists in the DB
@@ -161,9 +172,7 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 		
 		// Initialize Stanford Core NLP pipeline with german properties and a specific ticker entry as content
 		CoreDocument document = new CoreDocument(tickerEntry);
-		Properties germanProperties = StringUtils
-				.argsToProperties(new String[] { "-props", "StanfordCoreNLP-german.properties" });
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(germanProperties);
+		
 
 		// Do all kinds of possible annotations for the german language
 		pipeline.annotate(document);
@@ -248,9 +257,25 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 						System.out.println("Found a verb illustration of situation");
 						System.out.println("Player: " + potentialPlayer);
 						System.out.println("Action: " + tokens.get(i + 1));
-
-						sit = new GameSituation(new Player(potentialPlayer), new Action(actionIdentifier));
-						situationDefined = true;
+						
+						String lemmaAction = "";
+						try {
+							List<AnalyzedSentence> analyzedSentences = languagetool.analyzeText(actionIdentifier);
+							for (AnalyzedSentence analyzedSentence : analyzedSentences) {
+								for (AnalyzedTokenReadings analyzedTokens : analyzedSentence.getTokensWithoutWhitespace()) {
+									lemmaAction = analyzedTokens.getReadings().get(0).getLemma();
+									
+						
+								}
+							}
+							
+							sit = new GameSituation(new Player(potentialPlayer), new Action(lemmaAction));
+							situationDefined = true;
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
 					}
 				} else {
 					System.out.println("No possibility to find a situation!");
