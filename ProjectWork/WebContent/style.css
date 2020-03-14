@@ -17,14 +17,13 @@
 #ballGif {
 	display:none;
 }
+
 th {
 	/* same color as bootstrap success class */
     background-color: #5cb85c;
-    text-align: center; 
+    text-align: center;
 }
-td {
-	text-align: center;
-}
+
 td.entry {
 	width: 40%;
 }
@@ -37,5 +36,5 @@ td.info {
 .table-borderless > tfoot > tr > th,
 .table-borderless > thead > tr > td,
 .table-borderless > thead > tr > th {
-    border: none;
+    border: none !important;
 }

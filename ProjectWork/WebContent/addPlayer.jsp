@@ -77,7 +77,7 @@
 	</div>
 
 	
-	<div class="container">
+	<div class="container text-center">
 		<c:if test="${not empty success}">
     		${success}
 		</c:if>

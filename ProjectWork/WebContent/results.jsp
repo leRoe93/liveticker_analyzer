@@ -26,10 +26,12 @@
 	<div class="jumbotron text-center">
   		<h2>Gefundene Spieler mit absteigender Ähnlichkeit</h2>
 	</div>
-	<p>
+	<div class="container text-center">
+		<h3>Folgende Gewichtungen wurden zugrundegelegt:</h3>
+		<p>Alter: ${age }, Geschlecht: ${gender }, Spielklasse: ${league }, Position: ${preferred_position }, Offensive: ${offensive }, Defensive: ${defensive }, Zuspiele: ${passing }, Fairplay: ${fairplay }, Zweikaempfe: ${duels }, Vitalitaet: ${vitality }</p>
 		<c:if test="${not empty results}">
     		${results}
 		</c:if>
-	</p>
+	</div>
 </body>
 </html>
