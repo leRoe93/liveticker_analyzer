@@ -62,6 +62,7 @@ public class ProfileServlet extends HttpServlet {
 			request.setAttribute("first_name", instance.getAttForDesc(myConcept.getAttributeDesc("first_name")).getValueAsString());
 			request.setAttribute("last_name", instance.getAttForDesc(myConcept.getAttributeDesc("last_name")).getValueAsString());
 			request.setAttribute("gender", instance.getAttForDesc(myConcept.getAttributeDesc("gender")).getValueAsString());
+			request.setAttribute("birthday", instance.getAttForDesc(myConcept.getAttributeDesc("birthday")).getValueAsString());
 			request.setAttribute("age", instance.getAttForDesc(myConcept.getAttributeDesc("age")).getValueAsString());
 			request.setAttribute("current_club", instance.getAttForDesc(myConcept.getAttributeDesc("current_club")).getValueAsString());
 			request.setAttribute("preferred_position", instance.getAttForDesc(myConcept.getAttributeDesc("preferred_position")).getValueAsString());
@@ -71,13 +72,13 @@ public class ProfileServlet extends HttpServlet {
 			request.setAttribute("fairplay", instance.getAttForDesc(myConcept.getAttributeDesc("fairplay")).getValueAsString());
 			request.setAttribute("duels", instance.getAttForDesc(myConcept.getAttributeDesc("duels")).getValueAsString());
 			request.setAttribute("vitality", instance.getAttForDesc(myConcept.getAttributeDesc("vitality")).getValueAsString());
-			request.setAttribute("passes", instance.getAttForDesc(myConcept.getAttributeDesc("passing")).getValueAsString());
+			request.setAttribute("passing", instance.getAttForDesc(myConcept.getAttributeDesc("passing")).getValueAsString());
 			request.setAttribute("player_id", instance.getAttForDesc(myConcept.getAttributeDesc("player_id")).getValueAsString());
 			request.setAttribute("ticker_entries", instance.getAttForDesc(myConcept.getAttributeDesc("ticker_entries")).getValueAsString().split(";"));
 			
 			String buttonHtml = "<form action=DeletePlayerServlet method=post> "	
 					+ "<input type='hidden' name='instance' value='" + instance.getName() + "'/>"
-					+ "<input type='submit' value='Spieler loeschen!'>"
+					+ "<button class='btn btn-danger'>Spieler loeschen!</button>"
 					+ "</form>";
 			
 			request.setAttribute("deleteButton", buttonHtml);
