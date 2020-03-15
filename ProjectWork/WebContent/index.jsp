@@ -62,9 +62,9 @@
 					</div>
 					<div class="col-md-3">
 						<select class="form-control" size="1" id="gender" name="gender">
-							<option value="male">maennlich</option>
-							<option value="female">weiblich</option>
-							<option value="diverse">divers</option>
+							<option value="maennlich">maennlich</option>
+							<option value="weiblich">weiblich</option>
+							<option value="divers">divers</option>
 						</select>
 					</div>
 					<div class="col-md-3">
@@ -78,10 +78,10 @@
 					<div class="col-md-3">
 						<select class="form-control col-md-2" size="1"
 							id="preferred_position" name="preferred_position">
-							<option value="goalkeeper">Torwart</option>
-							<option value="defense">Verteidigung</option>
-							<option value="midfield">Mittelfeld</option>
-							<option value="storm">Sturm</option>
+							<option value="Torwart">Torwart</option>
+							<option value="Verteidigung">Verteidigung</option>
+							<option value="Mittelfeld">Mittelfeld</option>
+							<option value="Sturm">Sturm</option>
 						</select>
 					</div>
 				</div>

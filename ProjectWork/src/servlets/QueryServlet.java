@@ -137,7 +137,7 @@ public class QueryServlet extends HttpServlet {
 			
 			ret.start();
 			
-		
+			
 			List<Pair<Instance, Similarity>> result = ret.getResult();
 
 			// Dynamic table creation for results.jsp
@@ -158,7 +158,6 @@ public class QueryServlet extends HttpServlet {
 			String[] resultAttributes = { "first_name", "last_name", "age", "gender", "league", "preferred_position" };
 			
 			for (Pair<Instance, Similarity> pair : result) {
-				
 				tableContent.append("<tr>");
 				tableContent.append("<td>"
 						+ "<form action=ProfileServlet method=post> "	
@@ -172,7 +171,8 @@ public class QueryServlet extends HttpServlet {
 					tableContent.append("<td>" + pair.getFirst().getAttForDesc(myConcept.getAttributeDesc(att)).getValueAsString() + "</td>");
 				}
 
-				tableContent.append("<td>" + pair.getSecond() + "</td>");
+				double percentSim = pair.getSecond().getRoundedValue() * 100;
+				tableContent.append("<td>" + percentSim + "%</td>");
 				tableContent.append("</tr>");
 
 			}
@@ -200,7 +200,6 @@ public class QueryServlet extends HttpServlet {
 		AmalgamationFct function = new AmalgamationFct(AmalgamationConfig.WEIGHTED_SUM, myConcept, "customFunction");
 
 		// Getting all the attribute descs from the concept to add attributes to the case instance
-		
 
 		IntegerDesc ageDesc = (IntegerDesc) myConcept.getAttributeDesc("age");
 		
@@ -216,34 +215,37 @@ public class QueryServlet extends HttpServlet {
 		SymbolDesc leagueDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("league");
 		SymbolDesc positionDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("preferred_position");
 		
-		function.setWeight(ageDesc, 1);
-		function.setWeight(genderDesc, 10);
-		function.setWeight(leagueDesc, 5);
-		function.setWeight(positionDesc, 5);
+		function.setWeight(ageDesc, 20);
+		function.setWeight(genderDesc, 40);
+		function.setWeight(leagueDesc, 20);
+		function.setWeight(positionDesc, 20);
 		
-		function.setWeight(fairplayDesc, 1);
-		function.setWeight(passingDesc, 1);
-		function.setWeight(duelsDesc, 1);
-		function.setWeight(vitalityDesc, 1);
+		function.setWeight(fairplayDesc, 5);
+		function.setWeight(passingDesc, 5);
+		function.setWeight(duelsDesc, 5);
+		function.setWeight(vitalityDesc, 5);
 		
-		int offensiveWeight = 1;
-		int defensiveWeight = 1;
+		int offensiveWeight = 5;
+		int defensiveWeight = 5;
 		
 		switch (position) {
 			case "Torwart":
 				offensiveWeight = 0;
-				defensiveWeight = 5;
+				defensiveWeight = 10;
 				break;
 			case "Verteidigung":
-				defensiveWeight = 5;
+				defensiveWeight = 10;
 				break;
 			case "Mittelfeld":
-				offensiveWeight = 3;
-				defensiveWeight = 3;
+				offensiveWeight = 5;
+				defensiveWeight = 5;
 				break;
 			case "Sturm":
-				offensiveWeight = 5;
+				offensiveWeight = 10;
 				break;
+				
+			default:
+				
 		}
 		function.setWeight(offensiveDesc, offensiveWeight);
 		function.setWeight(defensiveDesc, defensiveWeight);
