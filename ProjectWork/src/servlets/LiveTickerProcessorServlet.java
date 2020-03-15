@@ -1,5 +1,6 @@
 package servlets;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +24,10 @@ import org.languagetool.AnalyzedSentence;
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.JLanguageTool;
 import org.languagetool.language.GermanyGerman;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import datastructure.Action;
 import datastructure.GameSituation;
@@ -78,11 +83,31 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 		// TODO Auto-generated method stub
 		doGet(request, response);
 		
-		// ?subpage=aufstellung
+		File file = new File("/Users/tadeus/Desktop/vocabulary.yaml");
+		
+
+		// Instantiating a new ObjectMapper as a YAMLFactory
+		ObjectMapper om = new ObjectMapper(new YAMLFactory());
+		
+		JsonNode jn = om.readTree(file);		
+		
+		
+		HashMap<String, String> exampleMap = new HashMap<String, String>();
+		String[] fieldNames = { "offensive", "defensive", "passing", "fairplay", "vitality", "duels" };
+		for (String fn : fieldNames) {
+			JsonNode jn2 = jn.get(fn);
+			for (int i = 0; i < jn2.size(); i++) {
+				exampleMap.put(jn2.get(i).toString().replaceAll("\"", ""), fn);
+				
+			}
+			
+			
+		}
+		
+		
+		// ?subpage=aufstellung does not work due to java script generated content
 		Document doc = Jsoup.connect(request.getParameter("url_lt")).get();
 		
-		// To get the minutes
-		// Elements links = doc.select(".minuteText");
 		
 		Elements links = doc.select(".rowBright");
 		
@@ -129,16 +154,19 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 			
 			StringBuilder inDbContent = new StringBuilder("<ol>");
 			StringBuilder notInDbContent = new StringBuilder("<ol>");
+			StringBuilder affectedAttributes = new StringBuilder("<ol>");
 
 			for (GameSituation sitInDb : situations.get("inDb")) {
 				inDbContent.append("<li>Entitaet: " + sitInDb.getActor().getLastName() + "<br/>Aktion: " + sitInDb.getAction().getIdentifier() + "</li>");
-				
+				affectedAttributes.append("<li>" + exampleMap.get(sitInDb.getAction().getIdentifier()) + ": Steigung/Senkung</li>");
 			}
 			for (GameSituation sitNotInDb : situations.get("notInDb")) {
 				notInDbContent.append("<li>Entitaet: " + sitNotInDb.getActor().getLastName() + "<br/>Aktion: " + sitNotInDb.getAction().getIdentifier() + "</li>");
 
 			}
 			
+			
+			affectedAttributes.append("</ol>");
 			inDbContent.append("</ol>");
 			notInDbContent.append("</ol>");
 			
@@ -146,7 +174,7 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 			tableContent.append("<td class='entry'>" + entry + "</td>");
 			tableContent.append("<td class='info'>" + notInDbContent + "</td>");
 			tableContent.append("<td class='info'>" + inDbContent + "</td>");
-			tableContent.append("<td class='info'>In Arbeit ...</td>");
+			tableContent.append("<td class='info'>" + affectedAttributes + "</td>");
 
 			tableContent.append("</tr>");
 			iterator++;
