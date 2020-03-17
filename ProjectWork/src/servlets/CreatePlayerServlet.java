@@ -1,6 +1,8 @@
 package servlets;
 
 import java.io.IOException;
+import java.util.LinkedList;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -12,19 +14,22 @@ import org.joda.time.Years;
 
 import de.dfki.mycbr.core.ICaseBase;
 import de.dfki.mycbr.core.Project;
+import de.dfki.mycbr.core.casebase.Attribute;
 import de.dfki.mycbr.core.casebase.Instance;
+import de.dfki.mycbr.core.casebase.MultipleAttribute;
 import de.dfki.mycbr.core.model.Concept;
 import de.dfki.mycbr.core.model.IntegerDesc;
 import de.dfki.mycbr.core.model.StringDesc;
 import de.dfki.mycbr.core.model.SymbolDesc;
 import de.dfki.mycbr.core.retrieval.Retrieval;
 import de.dfki.mycbr.core.retrieval.Retrieval.RetrievalMethod;
+import utils.MaintainerUtils;
 
 /**
  * Servlet implementation class CreateCaseServlet
  */
-@WebServlet("/CreateCaseServlet")
-public class CreateCaseServlet extends HttpServlet {
+@WebServlet("/CreatePlayerServlet")
+public class CreatePlayerServlet extends HttpServlet {
 	private static String data_path = "/Users/tadeus/Desktop/";
 	private static String projectName = "projectwork_db.prj";
 	private static String conceptName = "player";
@@ -33,7 +38,7 @@ public class CreateCaseServlet extends HttpServlet {
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public CreateCaseServlet() {
+    public CreatePlayerServlet() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -92,26 +97,31 @@ public class CreateCaseServlet extends HttpServlet {
 				IntegerDesc vitalityDesc = (IntegerDesc) myConcept.getAttributeDesc("vitality");
 				IntegerDesc duelsDesc = (IntegerDesc) myConcept.getAttributeDesc("duels");
 				
-				
 				SymbolDesc genderDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("gender");
 				SymbolDesc leagueDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("league");
 				SymbolDesc positionDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("preferred_position");
+				StringDesc entryDesc = (StringDesc) myConcept.getAttributeDesc("ticker_entries");
+
+				LinkedList<Attribute> entryList = new LinkedList<Attribute>();
+				MultipleAttribute<StringDesc> tickerEntries = new MultipleAttribute<StringDesc>((StringDesc) myConcept.getAttributeDesc("ticker_entries"), entryList);
+
 				
 				// Filling the instance with information
+				instance.addAttribute(entryDesc, tickerEntries);
 				instance.addAttribute(playerIdDesc, instanceId);
 				instance.addAttribute(firstNameDesc, request.getParameter("first_name").toString());
 				instance.addAttribute(lastNameDesc, request.getParameter("last_name").toString());
 				instance.addAttribute(clubDesc, request.getParameter("current_club").toString());
 				instance.addAttribute(birthdayDesc, request.getParameter("birthday").toString());
 
-				instance.addAttribute(offensiveDesc, 5);
-				instance.addAttribute(defensiveDesc, 5);
-				instance.addAttribute(fairplayDesc, 5);
-				instance.addAttribute(passingDesc, 5);
-				instance.addAttribute(vitalityDesc, 5);
-				instance.addAttribute(duelsDesc, 5);
+				instance.addAttribute(offensiveDesc, 50);
+				instance.addAttribute(defensiveDesc, 50);
+				instance.addAttribute(fairplayDesc, 50);
+				instance.addAttribute(passingDesc, 50);
+				instance.addAttribute(vitalityDesc, 50);
+				instance.addAttribute(duelsDesc, 50);
 				
-				instance.addAttribute(ageDesc, calculateAge(request.getParameter("birthday").toString()));
+				instance.addAttribute(ageDesc, MaintainerUtils.calculateAge(request.getParameter("birthday").toString()));
 				instance.addAttribute(tickerCounterDesc, 0);
 
 				
@@ -186,16 +196,6 @@ public class CreateCaseServlet extends HttpServlet {
 		return instanceName;
 	}
 	
-	private int calculateAge(String birthday) {
-		
-		String[] birthdayArray = birthday.split("\\.");
-		
-		LocalDate birthdate = new LocalDate (Integer.parseInt(birthdayArray[2]),
-				Integer.parseInt(birthdayArray[1]), 
-				Integer.parseInt(birthdayArray[0]));
-		LocalDate now = new LocalDate();
-		Years age = Years.yearsBetween(birthdate, now);
-		return age.getYears();
-	}
+	
 				
 }
