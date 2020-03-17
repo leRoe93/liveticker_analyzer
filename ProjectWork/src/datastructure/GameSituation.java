@@ -1,30 +1,43 @@
 package datastructure;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Properties;
+
+import org.languagetool.JLanguageTool;
+import org.languagetool.language.GermanyGerman;
+
+import de.dfki.mycbr.core.casebase.Instance;
+import de.dfki.mycbr.core.model.Concept;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.util.StringUtils;
 
 // Angelehnt an Ontologie der BA
 public class GameSituation {
 	
-	/*
-	 * private enum Attitude { DEFENSIVE, OFFENSIVE, NEUTRAL }
-	 * 
-	 * private enum Action { DUEL, GOAL_SHOT, FOUL, PASS, }
-	 * 
-	 * private Player actor; private Player opponent; private Player teamMember;
-	 * private boolean success; private boolean isPositive; private Attitude
-	 * attitude; private Action specificAction;
-	 */
-	
 	private Player actor;
+	private boolean potentialSituation;
+	private boolean processedSituation;
 	private Action action;
+	private String tickerEntry;
+	private String attributeAffection;
+	private LiveTicker liveticker;
+	
 	public GameSituation() {
 		super();
+		this.actor = new Player("NICHT IN CB");
+		this.action = new Action("", "none");
 		
 	}
 	public GameSituation(Player actor, Action action) {
 		super();
 		this.actor = actor;
 		this.action = action;
+	}
+	public GameSituation(String tickerEntry) {
+		this.potentialSituation = false;
+		this.processedSituation = false;
+		this.tickerEntry = tickerEntry;
 	}
 	public Player getActor() {
 		return actor;
@@ -37,7 +50,12 @@ public class GameSituation {
 	}
 	public void setAction(Action action) {
 		this.action = action;
+	}
+	public void process() {
+		
+		
+		
 	} 
-	
+
 	
 }

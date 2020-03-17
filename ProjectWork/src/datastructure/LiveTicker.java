@@ -15,6 +15,9 @@ public class LiveTicker {
 	String teamTwo;
 	String league;
 	ArrayList<String> tickerEntries = new ArrayList<String>();
+	ArrayList<ArrayList<GameSituation>> potentialSituations = new ArrayList<ArrayList<GameSituation>>();
+	ArrayList<ArrayList<GameSituation>> processableSituations = new ArrayList<ArrayList<GameSituation>>();
+	ArrayList<ArrayList<String>> attributeAffections = new ArrayList<ArrayList<String>>();
 
 	public LiveTicker(String tickerUrl) throws IOException {
 		// ?subpage=aufstellung does not work due to java script generated content
@@ -69,6 +72,24 @@ public class LiveTicker {
 	}
 	public void setTickerEntries(ArrayList<String> tickerEntries) {
 		this.tickerEntries = tickerEntries;
+	}
+	public ArrayList<ArrayList<GameSituation>> getPotentialSituations() {
+		return potentialSituations;
+	}
+	public void setPotentialSituations(ArrayList<ArrayList<GameSituation>> potentialSituations) {
+		this.potentialSituations = potentialSituations;
+	}
+	public ArrayList<ArrayList<GameSituation>> getProcessableSituations() {
+		return processableSituations;
+	}
+	public void setProcessableSituations(ArrayList<ArrayList<GameSituation>> processableSituations) {
+		this.processableSituations = processableSituations;
+	}
+	public ArrayList<ArrayList<String>> getAttributeAffections() {
+		return attributeAffections;
+	}
+	public void setAttributeAffections(ArrayList<ArrayList<String>> attributeAffections) {
+		this.attributeAffections = attributeAffections;
 	}
 	
 	
