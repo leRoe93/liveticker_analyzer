@@ -1,5 +1,7 @@
 package datastructure;
 
+import java.util.ArrayList;
+
 public class Player {
 	
 	private enum Position {
@@ -14,6 +16,9 @@ public class Player {
 	
 	private String club;
 	private Position position;
+	private ArrayList<Action> detectedActions;
+	
+	private String caseName;
 	
 	private boolean inDb = false;
 
@@ -61,6 +66,22 @@ public class Player {
 	public void setInDb(boolean inDb) {
 		this.inDb = inDb;
 	}
-	
 
+	public ArrayList<Action> getDetectedActions() {
+		return detectedActions;
+	}
+
+	public void setDetectedActions(ArrayList<Action> detectedActions) {
+		this.detectedActions = detectedActions;
+	}
+
+	public String getCaseName() {
+		return caseName;
+	}
+
+	public void setCaseName(String caseName) {
+		this.caseName = caseName;
+	}
+	
+	
 }
