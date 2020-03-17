@@ -49,13 +49,13 @@ public class ProfileServlet extends HttpServlet {
 		try {
 			myproject = new Project(data_path+projectName);
 			Concept myConcept = myproject.getConceptByID(conceptName);
-			
 			// Takes some time to load until access is possible
 			while (myproject.isImporting()) {
 				Thread.sleep(1000);
 			}
 			
 
+			
 			Instance instance = myproject.getInstance(request.getParameter("instance"));
 		
 			

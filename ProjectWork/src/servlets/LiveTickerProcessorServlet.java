@@ -2,6 +2,7 @@ package servlets;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,11 +44,13 @@ import de.dfki.mycbr.core.casebase.MultipleAttribute;
 import de.dfki.mycbr.core.casebase.StringAttribute;
 import de.dfki.mycbr.core.model.AttributeDesc;
 import de.dfki.mycbr.core.model.Concept;
+import de.dfki.mycbr.core.model.IntegerDesc;
 import de.dfki.mycbr.core.model.StringDesc;
 import de.dfki.mycbr.core.similarity.Similarity;
 import de.dfki.mycbr.util.Pair;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.parser.metrics.Evalb.CBEval;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
@@ -56,7 +59,6 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations;
 import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.StringUtils;
-
 
 /**
  * Servlet implementation class LiveTickerProcessorServlet
@@ -68,35 +70,41 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 	private static String projectName = "projectwork_db.prj";
 	private static String conceptName = "player";
 	private LiveTicker liveticker;
-	
+
 	private HashMap<String, String> vocabulary;
-       
-    /**
-     * @throws IOException 
-     * @throws JsonProcessingException 
-     * @see HttpServlet#HttpServlet()
-     */
-    public LiveTickerProcessorServlet() throws JsonProcessingException, IOException {
-        super();
-        this.vocabulary = initVocabularyMap();
-        // TODO Auto-generated constructor stub
-    }
+	ArrayList<String> recognizedPlayers = new ArrayList<String>();
 
 	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 * @throws IOException
+	 * @throws JsonProcessingException
+	 * @see HttpServlet#HttpServlet()
 	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	public LiveTickerProcessorServlet() throws JsonProcessingException, IOException {
+		super();
+		this.vocabulary = initVocabularyMap();
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
+	 *      response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		response.getWriter().append("Served at: ").append(request.getContextPath());
 	}
 
 	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
+	 *      response)
 	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		doGet(request, response);
 		Project myproject;
+
 		try {
 			myproject = new Project(data_path + projectName);
 			// Takes some time to load until access is possible
@@ -104,89 +112,132 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 				try {
 					Thread.sleep(1000);
 					Concept myConcept = myproject.getConceptByID(conceptName);
-					
+					ICaseBase cb = myproject.getCB("player_cb");
+
 					this.liveticker = new LiveTicker(request.getParameter("url_lt"));
 					JLanguageTool languagetool = new JLanguageTool(new GermanyGerman());
-					
+
 					Properties germanProperties = StringUtils
 							.argsToProperties(new String[] { "-props", "StanfordCoreNLP-german.properties" });
 					StanfordCoreNLP pipeline = new StanfordCoreNLP(germanProperties);
-					
+
 					// Dynamic table creation for progression.jsp
 					StringBuilder tableContent = new StringBuilder();
-					
-					tableContent.append("<table class='table table-striped table-bordered table-hover' id='tickerEntries'>");
-					tableContent.append("<thead class='thead-dark'><tr>" + "<th>Prozessierter Ticker Eintrag</th>" + "<th>Potenzielle Aktionen</th>" + "<th>Verwertete Aktionen</th>" +  "<th>Betroffenes Attribut</th>" + "</tr></thead>");
+
+					tableContent.append(
+							"<table class='table table-striped table-bordered table-hover' id='tickerEntries'>");
+					tableContent.append("<thead class='thead-dark'><tr>" + "<th>Prozessierter Ticker Eintrag</th>"
+							+ "<th>Potenzielle Aktionen</th>" + "<th>Verwertete Aktionen</th>"
+							+ "<th>Betroffenes Attribut</th>" + "</tr></thead>");
 					tableContent.append("<tbody>");
-					int limiter = 10;
+					int limiter = 1000;
 					int iterator = 1;
-					
-					
-					
+
 					for (String entry : liveticker.getTickerEntries()) {
-						
-						// Just to decrease processing time while testing around 
+
+						// Just to decrease processing time while testing around
 						if (iterator == limiter) {
 							break;
 						}
-						
-						HashMap<String, ArrayList<GameSituation>> situations = generateGameSituation(myproject, entry, myConcept, pipeline, languagetool);
-						
+
+						HashMap<String, ArrayList<GameSituation>> situations = generateGameSituation(cb, entry,
+								myConcept, pipeline, languagetool);
+
 						StringBuilder inDbContent = new StringBuilder("<ol>");
 						StringBuilder notInDbContent = new StringBuilder("<ol>");
 						StringBuilder affectedAttributes = new StringBuilder("<ol>");
-						
+
 						for (GameSituation sitInDb : situations.get("inDb")) {
-							inDbContent.append("<li>Entitaet: " + sitInDb.getActor().getLastName() + "<br/>Aktion: " + sitInDb.getAction().getIdentifier() + "</li>");
-							Instance player = myproject.getInstance(sitInDb.getActor().getCaseName());
-							
-							int newScore = calculateNewAttributeValue(myConcept.getAttributeDesc(sitInDb.getAction().getAffectedAttribute()), player, sitInDb.getAction().getAffectedAttribute(), Integer.parseInt(player.getAttForDesc(myConcept.getAttributeDesc("ticker_counter")).getValueAsString()));
-							affectedAttributes.append("<li>" + sitInDb.getAction().getAffectedAttribute() + ": " + newScore + "</li>");
-							myproject.getInstance(sitInDb.getActor().getCaseName()).addAttribute(myConcept.getAttributeDesc(sitInDb.getAction().getAffectedAttribute()), newScore);
-							//String tickerEntries = player.getAttForDesc(myConcept.getAttributeDesc("ticker_entries")).getValueAsString();
-							String[] tickerEntries = player.getAttForDesc(myConcept.getAttributeDesc("ticker_entries")).getValueAsString().split(";");
+							inDbContent.append("<li>Entitaet: " + sitInDb.getActor().getLastName() + "<br/>Aktion: "
+									+ sitInDb.getAction().getIdentifier() + "</li>");
+							Instance player = null;
+
+							for (Instance cbPlayer : cb.getCases()) {
+								if (cbPlayer.getName().equals(sitInDb.getActor().getCaseName())) {
+									System.out.println("Player found in CB");
+									player = cbPlayer;
+								}
+							}
+
+							boolean incrementCounter = true;
+							System.out.println("Recognized players during this live ticker analysis:");
+							for (String recPlayer : this.recognizedPlayers) {
+								if (recPlayer.equals(sitInDb.getActor().getLastName())) {
+									System.out.println(recPlayer + " has already been detected");
+									incrementCounter = false;
+								}
+							}
+
+							if (incrementCounter) {
+								System.out.println(sitInDb.getActor().getLastName()
+										+ " has not been detected yet, so the counter will get incremented");
+								player
+										.addAttribute(myConcept.getAttributeDesc("ticker_counter"),
+												Integer.parseInt(player.getAttForDesc(myConcept.getAttributeDesc("ticker_counter")).getValueAsString()) + 1);
+								
+								normalizeAttributes(player, myConcept);
+								
+								myproject.save();
+								
+								this.recognizedPlayers.add(sitInDb.getActor().getLastName());
+							}
+
+							System.out.println("Tickercounter: " + Integer.parseInt(player
+									.getAttForDesc(myConcept.getAttributeDesc("ticker_counter")).getValueAsString()));
+							int newScore = calculateNewAttributeValue(
+									myConcept.getAttributeDesc(sitInDb.getAction().getAffectedAttribute()), player,
+									sitInDb.getAction().getAffectedAttribute(),
+									Integer.parseInt(player.getAttForDesc(myConcept.getAttributeDesc("ticker_counter"))
+											.getValueAsString()));
+							affectedAttributes.append(
+									"<li>" + sitInDb.getAction().getAffectedAttribute() + ": " + newScore + "</li>");
+							player.addAttribute(
+									myConcept.getAttributeDesc(sitInDb.getAction().getAffectedAttribute()), newScore);
+							// String tickerEntries =
+							// player.getAttForDesc(myConcept.getAttributeDesc("ticker_entries")).getValueAsString();
+							String[] tickerEntries = player.getAttForDesc(myConcept.getAttributeDesc("ticker_entries"))
+									.getValueAsString().split(";");
 							StringDesc stringDesc = (StringDesc) myConcept.getAttributeDesc("ticker_entries");
-							
-							
+
 							LinkedList<Attribute> entryList = new LinkedList<Attribute>();
 							for (String entry1 : tickerEntries) {
 								entryList.add(stringDesc.getAttribute(entry1));
 							}
-							
-							
-							
-						    entryList.add(0, stringDesc.getAttribute(entry));
-							
-							MultipleAttribute<StringDesc> newTickerEntries = new MultipleAttribute<StringDesc>((StringDesc) myConcept.getAttributeDesc("ticker_entries"), entryList);
-							myproject.getInstance(sitInDb.getActor().getCaseName()).addAttribute(myConcept.getAttributeDesc("ticker_entries"), newTickerEntries);
+
+							entryList.add(0, stringDesc.getAttribute(entry));
+
+							MultipleAttribute<StringDesc> newTickerEntries = new MultipleAttribute<StringDesc>(
+									(StringDesc) myConcept.getAttributeDesc("ticker_entries"), entryList);
+							player
+									.addAttribute(myConcept.getAttributeDesc("ticker_entries"), newTickerEntries);
 
 							myproject.save();
 						}
 						for (GameSituation sitNotInDb : situations.get("notInDb")) {
-							notInDbContent.append("<li>Entitaet: " + sitNotInDb.getActor().getLastName() + "<br/>Aktion: " + sitNotInDb.getAction().getIdentifier() + "</li>");
-							
+							notInDbContent.append("<li>Entitaet: " + sitNotInDb.getActor().getLastName()
+									+ "<br/>Aktion: " + sitNotInDb.getAction().getIdentifier() + "</li>");
+
 						}
-						
-						
+
 						affectedAttributes.append("</ol>");
 						inDbContent.append("</ol>");
 						notInDbContent.append("</ol>");
-						
+
 						tableContent.append("<tr>");
 						tableContent.append("<td class='entry'>" + entry + "</td>");
 						tableContent.append("<td class='info'>" + notInDbContent + "</td>");
 						tableContent.append("<td class='info'>" + inDbContent + "</td>");
 						tableContent.append("<td class='info'>" + affectedAttributes + "</td>");
-						
+
 						tableContent.append("</tr>");
 						iterator++;
 					}
 					tableContent.append("</tbody>");
 					tableContent.append("</table>");
-					
+
 					request.setAttribute("ticker_url", request.getParameter("url_lt"));
 					request.setAttribute("tickerEntries", tableContent);
-					
+
 					request.getRequestDispatcher("progression.jsp").forward(request, response);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -197,19 +248,46 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
+
 	}
 	
+	private void normalizeAttributes(Instance player, Concept concept) throws NumberFormatException, ParseException {
+		int increment = 5;
+		int decrement = -5;
+		
+		IntegerDesc offensiveDesc = (IntegerDesc) concept.getAttributeDesc("offensive");
+		IntegerDesc defensiveDesc = (IntegerDesc) concept.getAttributeDesc("defensive");
+		IntegerDesc fairplayDesc = (IntegerDesc) concept.getAttributeDesc("fairplay");
+		IntegerDesc passingDesc = (IntegerDesc) concept.getAttributeDesc("passing");
+		IntegerDesc vitalityDesc = (IntegerDesc) concept.getAttributeDesc("vitality");
+		IntegerDesc duelsDesc = (IntegerDesc) concept.getAttributeDesc("duels");
+		
+		int offensiveValue = Integer.parseInt(player.getAttForDesc(offensiveDesc).getValueAsString());
+		int defensiveValue = Integer.parseInt(player.getAttForDesc(offensiveDesc).getValueAsString());
+		int fairplayValue = Integer.parseInt(player.getAttForDesc(offensiveDesc).getValueAsString());
+		int passingValue = Integer.parseInt(player.getAttForDesc(offensiveDesc).getValueAsString());
+		int vitalityValue = Integer.parseInt(player.getAttForDesc(offensiveDesc).getValueAsString());
+		int duelsValue = Integer.parseInt(player.getAttForDesc(offensiveDesc).getValueAsString());
+
+		
+		player.addAttribute(offensiveDesc, offensiveValue + decrement);
+		player.addAttribute(defensiveDesc, defensiveValue + decrement);
+		player.addAttribute(fairplayDesc, fairplayValue + decrement);
+		player.addAttribute(passingDesc, passingValue + decrement);
+		player.addAttribute(vitalityDesc, vitalityValue + increment);
+		player.addAttribute(duelsDesc, duelsValue + increment);
+
+	}
+
 	private HashMap<String, String> initVocabularyMap() throws JsonProcessingException, IOException {
 		File file = new File("/Users/tadeus/Desktop/vocabulary.yaml");
 		System.out.println("Initializing the vocabulary map.");
 
 		// Instantiating a new ObjectMapper as a YAMLFactory
 		ObjectMapper om = new ObjectMapper(new YAMLFactory());
-		
-		JsonNode jn = om.readTree(file);		
-		
-		
+
+		JsonNode jn = om.readTree(file);
+
 		HashMap<String, String> vocabulary = new HashMap<String, String>();
 		String[] fieldNames = { "offensive", "defensive", "passing", "fairplay", "vitality", "duels" };
 		for (String fn : fieldNames) {
@@ -218,63 +296,70 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 			for (int i = 0; i < jn2.size(); i++) {
 				System.out.println("Adding " + jn2.get(i).toString() + " as a valid term.");
 				vocabulary.put(jn2.get(i).toString().replaceAll("\"", ""), fn);
-				
+
 			}
-			
-			
+
 		}
-		
+
 		return vocabulary;
-		
+
 	}
-	
+
 	/**
-	 * This method tries to verify that a recognized named entity is present in the case base by comparing specific information. 
-	 * It is not fully reliable due to the circumstance that it is not possible to determine unique IDs 
-	 * for players within a fully textual live-ticker.
+	 * This method tries to verify that a recognized named entity is present in the
+	 * case base by comparing specific information. It is not fully reliable due to
+	 * the circumstance that it is not possible to determine unique IDs for players
+	 * within a fully textual live-ticker.
 	 * 
 	 * 
-	 * @param concept the my cbr concept to determine attribute descriptions
-	 * @param players the players which are present in the case base
-	 * @param liveticker the livetcker object containing metadata about the game observed
-	 * @param name the name of the recognized NE by Stanford Core NLP
-	 * @return a String indicating the case name to refer for later alteration of the case
-	 *         if the player does not exist in the case base return "DEFAULT"
+	 * @param concept    the my cbr concept to determine attribute descriptions
+	 * @param players    the players which are present in the case base
+	 * @param liveticker the livetcker object containing metadata about the game
+	 *                   observed
+	 * @param name       the name of the recognized NE by Stanford Core NLP
+	 * @return a String indicating the case name to refer for later alteration of
+	 *         the case if the player does not exist in the case base return
+	 *         "DEFAULT"
 	 */
-	
+
 	private String getPlayerFromDatabase(Concept concept, Collection<Instance> players, String name) {
-		
+
 		String caseName = "DEFAULT";
 		for (Instance player : players) {
 			// Name fits
 			if (player.getAttForDesc(concept.getAttributeDesc("last_name")).getValueAsString().equals(name)) {
 				// Current club is one of the clubs in the observed live ticker
-				if (player.getAttForDesc(concept.getAttributeDesc("current_club")).getValueAsString().equals(this.liveticker.getTeamOne())
-						|| player.getAttForDesc(concept.getAttributeDesc("current_club")).getValueAsString().equals(this.liveticker.getTeamTwo())) {
-					 // Player from case base is playing in the league of the observed live ticker
-					if (player.getAttForDesc(concept.getAttributeDesc("league")).getValueAsString().equals(this.liveticker.getLeague())) {
+				if (player.getAttForDesc(concept.getAttributeDesc("current_club")).getValueAsString()
+						.equals(this.liveticker.getTeamOne())
+						|| player.getAttForDesc(concept.getAttributeDesc("current_club")).getValueAsString()
+								.equals(this.liveticker.getTeamTwo())) {
+					// Player from case base is playing in the league of the observed live ticker
+					if (player.getAttForDesc(concept.getAttributeDesc("league")).getValueAsString()
+							.equals(this.liveticker.getLeague())) {
 						return player.getName();
 					}
-			
+
 				}
 			}
 		}
-		
+
 		return caseName;
 	}
+
 	// NLP Logic to convert the string into a structured form
 	// Shall return a gamesituation in the future
-	private HashMap<String, ArrayList<GameSituation>> generateGameSituation(Project project, String tickerEntry, Concept concept, StanfordCoreNLP pipeline, JLanguageTool languagetool) {
-		
-		// Initialize a HashMap that contains detected situations separated by the key indicating, if the affected player exists in the DB
+	private HashMap<String, ArrayList<GameSituation>> generateGameSituation(ICaseBase cb, String tickerEntry,
+			Concept concept, StanfordCoreNLP pipeline, JLanguageTool languagetool) {
+
+		// Initialize a HashMap that contains detected situations separated by the key
+		// indicating, if the affected player exists in the DB
 		HashMap<String, ArrayList<GameSituation>> situations = new HashMap<String, ArrayList<GameSituation>>();
 		situations.put("inDb", new ArrayList<GameSituation>());
 		situations.put("notInDb", new ArrayList<GameSituation>());
-		
-		
-		// Initialize Stanford Core NLP pipeline with german properties and a specific ticker entry as content
+
+		// Initialize Stanford Core NLP pipeline with german properties and a specific
+		// ticker entry as content
 		CoreDocument document = new CoreDocument(tickerEntry);
-		
 
 		// Do all kinds of possible annotations for the german language
 		pipeline.annotate(document);
@@ -282,38 +367,37 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 		// Always second one, because first one contains the minute.
 		CoreSentence sent = document.sentences().get(1);
 
-		
 		// Tokens represent the single words in a sentence
-        List<CoreLabel> tokens = sent.tokens();
-        
-        // POS Tags represent the "kind" of word, e.g. NE = Named Entity
-    	List<String> posTags = sent.posTags();
-    	
-    	
-    	
-    	String potentialPlayer = "";
-    	String actionIdentifier = "";
-    	
-    	for (int i = 0; i < tokens.size(); i++) {
-    		boolean situationDefined = false;
-    		
-    		// Current token is a named entity and thus potentially a player
-    		if (posTags.get(i).equals("NE")) {
-    			
-    			// Initialize a GameSituation that gets specified later on
-    			GameSituation sit = new GameSituation();
-    			
-    			// Get the potential player name from the named entity, regardless if it is a player or not
-    			potentialPlayer = tokens.get(i).toString().substring(0, tokens.get(i).toString().indexOf("-"));
-    			
-    			System.out.println("Current token: " + potentialPlayer + " is a Named Entity!");
-    			// Iterate over all players in DB and check if one of them matches the current candidate
-    			
-    			
-    			// If there is a word before this named entity
+		List<CoreLabel> tokens = sent.tokens();
+
+		// POS Tags represent the "kind" of word, e.g. NE = Named Entity
+		List<String> posTags = sent.posTags();
+
+		String potentialPlayer = "";
+		String actionIdentifier = "";
+
+		for (int i = 0; i < tokens.size(); i++) {
+			boolean situationDefined = false;
+
+			// Current token is a named entity and thus potentially a player
+			if (posTags.get(i).equals("NE")) {
+
+				// Initialize a GameSituation that gets specified later on
+				GameSituation sit = new GameSituation();
+
+				// Get the potential player name from the named entity, regardless if it is a
+				// player or not
+				potentialPlayer = tokens.get(i).toString().substring(0, tokens.get(i).toString().indexOf("-"));
+
+				System.out.println("Current token: " + potentialPlayer + " is a Named Entity!");
+				// Iterate over all players in DB and check if one of them matches the current
+				// candidate
+
+				// If there is a word before this named entity
 				if ((i - 1) >= 0) {
 					System.out.println("There is a word preceeding this entity!");
-					// If the preceeding token is a preposition we might detect an action by going further
+					// If the preceeding token is a preposition we might detect an action by going
+					// further
 					if (posTags.get(i - 1).equals("APPR")) {
 						System.out.println("It is a preposition!");
 						// If there is a word before this preposition
@@ -329,15 +413,16 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 								System.out.println("Player: " + potentialPlayer);
 								System.out.println("Action: " + actionIdentifier);
 
-								sit = new GameSituation(new Player(potentialPlayer), new Action(actionIdentifier, this.vocabulary.get(actionIdentifier)));
+								sit = new GameSituation(new Player(potentialPlayer),
+										new Action(actionIdentifier, this.vocabulary.get(actionIdentifier)));
 								situationDefined = true;
-								
+
 							}
 						}
 					}
 				}
-				
-				// If there is word after this named entity 
+
+				// If there is word after this named entity
 				if ((i + 1) < tokens.size() && situationDefined == false) {
 					System.out.println("There is a word following this entity and no situation is defined yet.");
 					// If the following token is a verb, it is regarded as an action
@@ -348,86 +433,83 @@ public class LiveTickerProcessorServlet extends HttpServlet {
 						System.out.println("Found a verb illustration of situation");
 						System.out.println("Player: " + potentialPlayer);
 						System.out.println("Action: " + tokens.get(i + 1));
-						
+
 						String lemmaAction = "";
 						try {
 							List<AnalyzedSentence> analyzedSentences = languagetool.analyzeText(actionIdentifier);
 							for (AnalyzedSentence analyzedSentence : analyzedSentences) {
-								for (AnalyzedTokenReadings analyzedTokens : analyzedSentence.getTokensWithoutWhitespace()) {
+								for (AnalyzedTokenReadings analyzedTokens : analyzedSentence
+										.getTokensWithoutWhitespace()) {
 									lemmaAction = analyzedTokens.getReadings().get(0).getLemma();
-									
-						
+
 								}
 							}
-							
-							sit = new GameSituation(new Player(potentialPlayer), new Action(lemmaAction, this.vocabulary.get(actionIdentifier)));
+
+							sit = new GameSituation(new Player(potentialPlayer),
+									new Action(lemmaAction, this.vocabulary.get(actionIdentifier)));
 							situationDefined = true;
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						
+
 					}
 				} else {
 					System.out.println("No possibility to find a situation!");
 				}
-				
-				
+
 				if (situationDefined == true) {
 					System.out.println("A situation has been defined during this iteration!");
 					// Depending on the database the situation gets added to specific list
-			    	
-					String caseName = getPlayerFromDatabase(concept, project.getAllInstances(), potentialPlayer);
-			    	if (!caseName.equals("DEFAULT")) {
-			    		System.out.println("Player: " + potentialPlayer + " exists in the case base.");
-			    		sit.getActor().setCaseName(caseName);
-			    		situations.get("inDb").add(sit);
-			    	} else {
-			    		System.out.println("Player: " + potentialPlayer + " does not exist in the case base.");
-			    		situations.get("notInDb").add(sit);
-			    	}
+
+					String caseName = getPlayerFromDatabase(concept, cb.getCases(), potentialPlayer);
+					if (!caseName.equals("DEFAULT")) {
+						System.out.println("Player: " + potentialPlayer + " exists in the case base.");
+						sit.getActor().setCaseName(caseName);
+						situations.get("inDb").add(sit);
+					} else {
+						System.out.println("Player: " + potentialPlayer + " does not exist in the case base.");
+						situations.get("notInDb").add(sit);
+					}
 
 				}
 
-    		} 
-    		
-    		
-    	}
-		
-		
-		
+			}
+
+		}
+
 		return situations;
 	}
-	
-	private int calculateNewAttributeValue(AttributeDesc attDesc, Instance instance, String affectedAttribute, int tickerCounter) {
+
+	private int calculateNewAttributeValue(AttributeDesc attDesc, Instance instance, String affectedAttribute,
+			int tickerCounter) {
 		// Fairplay and vitality can only get negatively influenced due to actions
 		System.out.println("Calculating new attribute value for: " + affectedAttribute);
 		int currentScore = Integer.parseInt(instance.getAttForDesc(attDesc).getValueAsString());
 		System.out.println("Current score for this player is: " + currentScore);
 		int newScore = currentScore;
 		switch (affectedAttribute) {
-			case "offensive":
-			case "defensive":
-			case "duels":
-			case "passing":
-				newScore+=5;
-				break;
-			case "fairplay":
-			case "vitality":
-				newScore-=5;
-				break;
-			default: 
-				System.out.println("Invalid attribute affected: " + affectedAttribute);
+		case "offensive":
+		case "defensive":
+		case "duels":
+		case "passing":
+			newScore += 5;
+			break;
+		case "fairplay":
+		case "vitality":
+			newScore -= 5;
+			break;
+		default:
+			System.out.println("Invalid attribute affected: " + affectedAttribute);
 		}
-		
+
 		System.out.println("New score is: " + newScore);
 		if (newScore > 100) {
 			return 100;
 		} else {
 			return newScore;
 		}
-	
+
 	}
-	
-	
+
 }

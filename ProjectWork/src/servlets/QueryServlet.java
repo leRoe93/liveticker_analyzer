@@ -1,11 +1,8 @@
 package servlets;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
+import java.text.ParseException;
 import java.util.List;
-import java.util.Map;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -14,20 +11,18 @@ import javax.servlet.http.HttpServletResponse;
 
 import de.dfki.mycbr.core.ICaseBase;
 import de.dfki.mycbr.core.Project;
-import de.dfki.mycbr.core.casebase.Attribute;
 import de.dfki.mycbr.core.casebase.Instance;
 import de.dfki.mycbr.core.model.AttributeDesc;
 import de.dfki.mycbr.core.model.Concept;
 import de.dfki.mycbr.core.model.IntegerDesc;
-import de.dfki.mycbr.core.model.StringDesc;
 import de.dfki.mycbr.core.model.SymbolDesc;
 import de.dfki.mycbr.core.retrieval.Retrieval;
 import de.dfki.mycbr.core.retrieval.Retrieval.RetrievalMethod;
-import de.dfki.mycbr.core.similarity.AdvancedIntegerFct;
 import de.dfki.mycbr.core.similarity.AmalgamationFct;
 import de.dfki.mycbr.core.similarity.Similarity;
 import de.dfki.mycbr.core.similarity.config.AmalgamationConfig;
 import de.dfki.mycbr.util.Pair;
+import utils.MaintainerUtils;
 
 
 /**
@@ -82,13 +77,12 @@ public class QueryServlet extends HttpServlet {
 			myproject = new Project(data_path+projectName);
 			Concept myConcept = myproject.getConceptByID(conceptName);
 			
-			ICaseBase cb = myproject.getCB("player_cb");
-			
-			
 			// Takes some time to load until access is possible
 			while (myproject.isImporting()) {
 				Thread.sleep(1000);
 			}
+			ICaseBase cb = updatePlayerCb(myproject, myConcept);
+			
 			
 			
 			AmalgamationFct customFct = generateWeightedFct(myConcept, preferred_position);
@@ -194,6 +188,26 @@ public class QueryServlet extends HttpServlet {
 		
 		
 		request.getRequestDispatcher("/results.jsp").forward(request, response);
+	}
+	
+	// This way it works, to alter the case base effectively
+	private ICaseBase updatePlayerCb(Project project, Concept concept) throws ParseException {
+		
+		System.out.println("Now updating ages of players by parsing their birthday.");
+		String birthday = "";
+		int age = 0;
+		for (Instance instance : project.getCB("player_cb").getCases()) {
+			
+			birthday = instance.getAttForDesc(concept.getAttributeDesc("birthday")).getValueAsString();
+			age = MaintainerUtils.calculateAge(birthday);
+			
+			System.out.println(instance.getName() + " has birthday: " + birthday + " and is: " + age + " years old now.");
+			instance.addAttribute(concept.getAttributeDesc("age"), age);
+		}
+		
+		project.save();
+		
+		return project.getCB("player_cb");
 	}
 	
 	private AmalgamationFct generateWeightedFct(Concept myConcept, String position) {

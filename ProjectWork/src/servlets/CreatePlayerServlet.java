@@ -122,6 +122,7 @@ public class CreatePlayerServlet extends HttpServlet {
 				instance.addAttribute(duelsDesc, 50);
 				
 				instance.addAttribute(ageDesc, MaintainerUtils.calculateAge(request.getParameter("birthday").toString()));
+
 				instance.addAttribute(tickerCounterDesc, 0);
 
 				

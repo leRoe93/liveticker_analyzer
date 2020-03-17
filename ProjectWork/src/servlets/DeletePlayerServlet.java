@@ -62,7 +62,6 @@ public class DeletePlayerServlet extends HttpServlet {
 		Project myproject;
 		try {
 			myproject = new Project(data_path + projectName);
-			Concept myConcept = myproject.getConceptByID(conceptName);
 
 			ICaseBase cb = myproject.getCB("player_cb");
 
@@ -71,8 +70,10 @@ public class DeletePlayerServlet extends HttpServlet {
 				Thread.sleep(1000);
 			}
 			
+			// Throws a null pointer
+			//myproject.removeInstance(instance);
 			myproject.removeCase(instance);
-			
+			cb.removeCase(instance);
 			
 			myproject.save();
 			request.setAttribute("success", "Spielerinstanz: " + instance + " erfolgreich geloescht!");
