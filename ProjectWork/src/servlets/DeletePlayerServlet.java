@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
+
 import de.dfki.mycbr.core.ICaseBase;
 import de.dfki.mycbr.core.Project;
 import de.dfki.mycbr.core.casebase.Instance;
@@ -29,7 +31,8 @@ public class DeletePlayerServlet extends HttpServlet {
 	
 	private static String data_path = "/Users/tadeus/Desktop/";
 	private static String projectName = "projectwork_db.prj";
-	private static String conceptName = "player";
+	private final static Logger LOGGER = Logger.getLogger(DeletePlayerServlet.class);
+
        
     /**
      * @see HttpServlet#HttpServlet()
@@ -54,35 +57,31 @@ public class DeletePlayerServlet extends HttpServlet {
 		// TODO Auto-generated method stub
 		doGet(request, response);
 		
+		// Instance that shall be deleted from the case base
+		String player = request.getParameter("instance");
 		
-		String instance = request.getParameter("instance");
-		
-
-		// MyCBR setup
 		Project myproject;
 		try {
 			myproject = new Project(data_path + projectName);
 
 			ICaseBase cb = myproject.getCB("player_cb");
 
-			// Takes some time to load until access is possible
+			// Necessary because it takes some time until MyCBR fully loads the project
 			while (myproject.isImporting()) {
 				Thread.sleep(1000);
 			}
 			
-			// Throws a null pointer
-			//myproject.removeInstance(instance);
-			myproject.removeCase(instance);
-			cb.removeCase(instance);
+			myproject.removeCase(player);
+			cb.removeCase(player);
 			
 			myproject.save();
-			request.setAttribute("success", "Spielerinstanz: " + instance + " erfolgreich geloescht!");
+			
+			request.setAttribute("success", "Spielerinstanz: " + player + " erfolgreich geloescht!");
 			
 			request.getRequestDispatcher("profile.jsp").forward(request, response);
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.error("Exception occured whilst deleting player from case base: " + e.getStackTrace());
 		}
 
 	}
