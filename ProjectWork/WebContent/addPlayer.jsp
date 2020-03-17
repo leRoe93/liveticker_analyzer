@@ -49,7 +49,7 @@
 	</div>
 
 	<div class="container form-group text-center">
-		<form role="form" action="CreateCaseServlet" method="post">
+		<form role="form" action="CreatePlayerServlet" method="post">
 			<div class="row col-md-12">
 				
 					<label for="first_name">Vorname:<input required name="first_name" class="form-control" type="text" placeholder= "z.B. 'Max'" value= ${firstName }></label>
