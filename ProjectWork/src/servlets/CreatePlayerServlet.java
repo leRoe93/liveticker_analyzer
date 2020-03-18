@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
 import org.joda.time.LocalDate;
 import org.joda.time.Years;
 
@@ -24,17 +25,16 @@ import de.dfki.mycbr.core.model.SymbolDesc;
 import de.dfki.mycbr.core.retrieval.Retrieval;
 import de.dfki.mycbr.core.retrieval.Retrieval.RetrievalMethod;
 import utils.MaintainerUtils;
+import utils.PathingInfo;
 
 /**
  * Servlet implementation class CreateCaseServlet
  */
 @WebServlet("/CreatePlayerServlet")
 public class CreatePlayerServlet extends HttpServlet {
-	private static String data_path = "/Users/tadeus/Desktop/";
-	private static String projectName = "projectwork_db.prj";
-	private static String conceptName = "player";
 	private static final long serialVersionUID = 1L;
-       
+    
+	private final static Logger LOGGER = Logger.getLogger(CreatePlayerServlet.class);
     /**
      * @see HttpServlet#HttpServlet()
      */
@@ -58,52 +58,51 @@ public class CreatePlayerServlet extends HttpServlet {
 		// TODO Auto-generated method stub
 		doGet(request, response);
 		
-		// MyCBR setup
 		Project myproject;
 		try {
-			myproject = new Project(data_path + projectName);
+			myproject = new Project(PathingInfo.PROJECT_PATH + PathingInfo.PROJECT_NAME);
 			
-			// Takes some time to load until access is possible
+			// Necessary because it takes some time until MyCBR fully loads the project
 			while (myproject.isImporting()) {
 				Thread.sleep(1000);
 			}
-			Concept myConcept = myproject.getConceptByID(conceptName);
-
-			ICaseBase cb = myproject.getCB("player_cb");
+			Concept concept = myproject.getConceptByID(PathingInfo.CONCEPT_NAME);
+			ICaseBase cb = myproject.getCB(PathingInfo.CASE_BASE);
 			
-			String existingInstance = playerAlreadyExists(myConcept, cb, request);
+			String existingInstance = playerAlreadyExists(concept, cb, request);
 			
+			// If the player seem to not exist in the case base
 			if (existingInstance.isEmpty()) {
 				
 				String instanceId = Integer.toString(myproject.getAllInstances().size());
 				
-				Instance instance = myConcept.addInstance("player_" + instanceId);
+				Instance instance = concept.addInstance("player_" + instanceId);
 				existingInstance = instance.getName();
 				
 				// Getting all the attribute descs from the concept to add attributes to the case instance
-				StringDesc playerIdDesc = (StringDesc) myConcept.getAttributeDesc("player_id");
-				StringDesc firstNameDesc = (StringDesc) myConcept.getAttributeDesc("first_name");
-				StringDesc lastNameDesc = (StringDesc) myConcept.getAttributeDesc("last_name");
-				StringDesc clubDesc = (StringDesc) myConcept.getAttributeDesc("current_club");
-				StringDesc birthdayDesc = (StringDesc) myConcept.getAttributeDesc("birthday");
+				StringDesc playerIdDesc = (StringDesc) concept.getAttributeDesc("player_id");
+				StringDesc firstNameDesc = (StringDesc) concept.getAttributeDesc("first_name");
+				StringDesc lastNameDesc = (StringDesc) concept.getAttributeDesc("last_name");
+				StringDesc clubDesc = (StringDesc) concept.getAttributeDesc("current_club");
+				StringDesc birthdayDesc = (StringDesc) concept.getAttributeDesc("birthday");
 
-				IntegerDesc ageDesc = (IntegerDesc) myConcept.getAttributeDesc("age");
-				IntegerDesc tickerCounterDesc = (IntegerDesc) myConcept.getAttributeDesc("ticker_counter");
+				IntegerDesc ageDesc = (IntegerDesc) concept.getAttributeDesc("age");
+				IntegerDesc tickerCounterDesc = (IntegerDesc) concept.getAttributeDesc("ticker_counter");
 				
-				IntegerDesc offensiveDesc = (IntegerDesc) myConcept.getAttributeDesc("offensive");
-				IntegerDesc defensiveDesc = (IntegerDesc) myConcept.getAttributeDesc("defensive");
-				IntegerDesc fairplayDesc = (IntegerDesc) myConcept.getAttributeDesc("fairplay");
-				IntegerDesc passingDesc = (IntegerDesc) myConcept.getAttributeDesc("passing");
-				IntegerDesc vitalityDesc = (IntegerDesc) myConcept.getAttributeDesc("vitality");
-				IntegerDesc duelsDesc = (IntegerDesc) myConcept.getAttributeDesc("duels");
+				IntegerDesc offensiveDesc = (IntegerDesc) concept.getAttributeDesc("offensive");
+				IntegerDesc defensiveDesc = (IntegerDesc) concept.getAttributeDesc("defensive");
+				IntegerDesc fairplayDesc = (IntegerDesc) concept.getAttributeDesc("fairplay");
+				IntegerDesc passingDesc = (IntegerDesc) concept.getAttributeDesc("passing");
+				IntegerDesc vitalityDesc = (IntegerDesc) concept.getAttributeDesc("vitality");
+				IntegerDesc duelsDesc = (IntegerDesc) concept.getAttributeDesc("duels");
 				
-				SymbolDesc genderDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("gender");
-				SymbolDesc leagueDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("league");
-				SymbolDesc positionDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("preferred_position");
-				StringDesc entryDesc = (StringDesc) myConcept.getAttributeDesc("ticker_entries");
+				SymbolDesc genderDesc = (SymbolDesc) concept.getAllAttributeDescs().get("gender");
+				SymbolDesc leagueDesc = (SymbolDesc) concept.getAllAttributeDescs().get("league");
+				SymbolDesc positionDesc = (SymbolDesc) concept.getAllAttributeDescs().get("preferred_position");
+				StringDesc entryDesc = (StringDesc) concept.getAttributeDesc("ticker_entries");
 
 				LinkedList<Attribute> entryList = new LinkedList<Attribute>();
-				MultipleAttribute<StringDesc> tickerEntries = new MultipleAttribute<StringDesc>((StringDesc) myConcept.getAttributeDesc("ticker_entries"), entryList);
+				MultipleAttribute<StringDesc> tickerEntries = new MultipleAttribute<StringDesc>((StringDesc) concept.getAttributeDesc("ticker_entries"), entryList);
 
 				
 				// Filling the instance with information
@@ -153,13 +152,21 @@ public class CreatePlayerServlet extends HttpServlet {
 
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			LOGGER.error("Exception occured whilst opening the My CBR database: " + e.getMessage());
 			e.printStackTrace();
 		}
 		
 	}
-	
-	// String used to have the instance name for button link, empty string equals a logical false
+
+	/**
+	 * This method checks if the player already exists in the database by comparing a handful 
+	 * of personal information about the instance the input.
+	 * 
+	 * @param concept the currently used concept
+	 * @param cb the currently used case base
+	 * @param request the request object provided by the addPlayer.jsp
+	 * @return the name of the instance 
+	 */
 	private String playerAlreadyExists(Concept concept, ICaseBase cb, HttpServletRequest request) {
 		String instanceName = "";
 		
@@ -170,6 +177,7 @@ public class CreatePlayerServlet extends HttpServlet {
 		String birthday = request.getParameter("birthday").toString();
 		String league = request.getParameter("league").toString();
 		
+		LOGGER.info("Comparing the new case to cases in the database.");
 		for (Instance instance : cb.getCases()) {
 			
 			String instanceFirstName = instance.getAttForDesc(concept.getAttributeDesc("first_name")).getValueAsString();
@@ -178,18 +186,19 @@ public class CreatePlayerServlet extends HttpServlet {
 			String instanceBirthday = instance.getAttForDesc(concept.getAttributeDesc("birthday")).getValueAsString();
 			String instanceLeague = instance.getAttForDesc(concept.getAttributeDesc("league")).getValueAsString();
 
-			System.out.println("First name: " + instanceFirstName + " equals " + firstName + "?");
-			System.out.println("Last name: " + instanceLastName + " equals " + lastName + "?");
-			System.out.println("birthday: " + instanceBirthday + " equals " + birthday + "?");
-			System.out.println("current club: " + instanceCurrentClub + " equals " + currentClub + "?");
-			System.out.println("league: " + instanceLeague + " equals " + league + "?");
+			LOGGER.info("Instance first name: " + instanceFirstName + " equals " + firstName + "?");
+			LOGGER.info("Instance last name: " + instanceLastName + " equals " + lastName + "?");
+			LOGGER.info("Instance birthday: " + instanceBirthday + " equals " + birthday + "?");
+			LOGGER.info("Instance current club: " + instanceCurrentClub + " equals " + currentClub + "?");
+			LOGGER.info("Instance league: " + instanceLeague + " equals " + league + "?");
 
 			// Current solution is to have a check for every informational attribute of the player for its entity
+			// Not reliable for all scenarios, needs to be enhanced
 			if (instanceFirstName.equals(firstName) && instanceLastName.equals(lastName) 
 					&& instanceCurrentClub.equals(currentClub) && instanceBirthday.equals(birthday)
 					&& instanceLeague.equals(league)) {
 				
-				System.out.println("Yes, everything matches!");
+				LOGGER.warn("Yes, everything matches!");
 				return instance.getName();
 			}
 		}

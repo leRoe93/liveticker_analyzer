@@ -25,6 +25,7 @@ import de.dfki.mycbr.core.similarity.Similarity;
 import de.dfki.mycbr.core.similarity.config.AmalgamationConfig;
 import de.dfki.mycbr.util.Pair;
 import utils.MaintainerUtils;
+import utils.PathingInfo;
 
 
 /**
@@ -32,9 +33,6 @@ import utils.MaintainerUtils;
  */
 @WebServlet("/QueryServlet")
 public class QueryServlet extends HttpServlet {
-	private static String data_path = "/Users/tadeus/Desktop/";
-	private static String projectName = "projectwork_db.prj";
-	private static String conceptName = "player";
 	
 	private static final long serialVersionUID = 1L;
 	private final static Logger LOGGER = Logger.getLogger(QueryServlet.class);
@@ -62,16 +60,17 @@ public class QueryServlet extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		doGet(request, response);
-		
+	
 		Project myproject;
 		try {
-			myproject = new Project(data_path+projectName);
-			Concept concept = myproject.getConceptByID(conceptName);
+			myproject = new Project(PathingInfo.PROJECT_PATH + PathingInfo.PROJECT_NAME);
+			
 			
 			// Necessary because it takes some time until MyCBR fully loads the project
 			while (myproject.isImporting()) {
 				Thread.sleep(1000);
 			}
+			Concept concept = myproject.getConceptByID(PathingInfo.CONCEPT_NAME);
 			ICaseBase cb = updatePlayerCb(myproject, concept);
 			
 			// A sorted list containing the instance with respective global similarity to the query
@@ -83,14 +82,15 @@ public class QueryServlet extends HttpServlet {
 			request.setAttribute("results", tableContent);
 			
 		} catch (Exception e) {	
-			System.err.println("An exception occured whilst opening MyCBR project or processing the query: " + e.getStackTrace());
+			LOGGER.error("An exception occured whilst opening MyCBR project or processing the query: " + e.getMessage());
 		} 
 		
 		try {
 			request.getRequestDispatcher("/results.jsp").forward(request, response);
 			
 		} catch (Exception e) {
-			System.err.println("An exception occured whilst dispatching to results.jsp");
+			LOGGER.error("An exception occured whilst dispatching to results.jsp: " + e);
+			e.printStackTrace();
 		}
 		
 	}
@@ -155,7 +155,8 @@ public class QueryServlet extends HttpServlet {
 			query.addAttribute(duelsDesc, leagueDesc.getAttribute(duels));
 			
 		} catch (ParseException e) {
-			LOGGER.error("Cannot add attribute to the My CBR query: " + e.getStackTrace());
+			LOGGER.error("Cannot add attribute to the My CBR query: " + e);
+			e.printStackTrace();
 		}
 
 		ret.start();
@@ -240,7 +241,7 @@ public class QueryServlet extends HttpServlet {
 		LOGGER.info("Updating player ages by parsing birthday Strings.");
 		String birthday = "";
 		int age = 0;
-		for (Instance instance : project.getCB("player_cb").getCases()) {
+		for (Instance instance : project.getCB(PathingInfo.CASE_BASE).getCases()) {
 			
 			birthday = instance.getAttForDesc(concept.getAttributeDesc("birthday")).getValueAsString();
 			age = MaintainerUtils.calculateAge(birthday);
@@ -250,7 +251,8 @@ public class QueryServlet extends HttpServlet {
 				instance.addAttribute(concept.getAttributeDesc("age"), age);
 				
 			} catch (ParseException e) {
-				LOGGER.error("Unable to add new player age to the case: " + e.getStackTrace());
+				LOGGER.error("Unable to add new player age to the case: " + e);
+				e.printStackTrace();
 			}
 		}
 		
@@ -317,7 +319,7 @@ public class QueryServlet extends HttpServlet {
 				offensiveWeight = 10;
 				break;
 			default:
-				LOGGER.warn("Given position: " + position + " is invalid and thus not used for mapping.");
+				LOGGER.warn("Given position: " + position + " is invalid and thus not used for weighting.");
 				
 		}
 		function.setWeight(offensiveDesc, offensiveWeight);

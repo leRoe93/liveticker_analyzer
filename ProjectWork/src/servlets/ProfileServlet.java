@@ -13,15 +13,14 @@ import de.dfki.mycbr.core.ICaseBase;
 import de.dfki.mycbr.core.Project;
 import de.dfki.mycbr.core.casebase.Instance;
 import de.dfki.mycbr.core.model.Concept;
+import utils.PathingInfo;
 
 /**
  * Servlet implementation class ProfileServlet
  */
 @WebServlet("/ProfileServlet")
 public class ProfileServlet extends HttpServlet {
-	private static String data_path = "/Users/tadeus/Desktop/";
-	private static String projectName = "projectwork_db.prj";
-	private static String conceptName = "player";
+
 	private static final long serialVersionUID = 1L;
 	private final static Logger LOGGER = Logger.getLogger(ProfileServlet.class);
     /**
@@ -49,9 +48,9 @@ public class ProfileServlet extends HttpServlet {
 				
 		Project myproject;
 		try {
-			myproject = new Project(data_path+projectName);
-			Concept myConcept = myproject.getConceptByID(conceptName);
-			ICaseBase cb = myproject.getCB("player_cb");
+			myproject = new Project(PathingInfo.PROJECT_PATH + PathingInfo.PROJECT_NAME);
+			Concept concept = myproject.getConceptByID(PathingInfo.CONCEPT_NAME);
+			ICaseBase cb = myproject.getCB(PathingInfo.CASE_BASE);
 			
 			// Necessary because it takes some time until MyCBR fully loads the project
 			while (myproject.isImporting()) {
@@ -67,22 +66,22 @@ public class ProfileServlet extends HttpServlet {
 			}
 		
 			// Provide all necessary information for the profile retrieved from the case
-			request.setAttribute("first_name", player.getAttForDesc(myConcept.getAttributeDesc("first_name")).getValueAsString());
-			request.setAttribute("last_name", player.getAttForDesc(myConcept.getAttributeDesc("last_name")).getValueAsString());
-			request.setAttribute("gender", player.getAttForDesc(myConcept.getAttributeDesc("gender")).getValueAsString());
-			request.setAttribute("birthday", player.getAttForDesc(myConcept.getAttributeDesc("birthday")).getValueAsString());
-			request.setAttribute("age", player.getAttForDesc(myConcept.getAttributeDesc("age")).getValueAsString());
-			request.setAttribute("current_club", player.getAttForDesc(myConcept.getAttributeDesc("current_club")).getValueAsString());
-			request.setAttribute("preferred_position", player.getAttForDesc(myConcept.getAttributeDesc("preferred_position")).getValueAsString());
-			request.setAttribute("league", player.getAttForDesc(myConcept.getAttributeDesc("league")).getValueAsString());
-			request.setAttribute("offensive", player.getAttForDesc(myConcept.getAttributeDesc("offensive")).getValueAsString());
-			request.setAttribute("defensive", player.getAttForDesc(myConcept.getAttributeDesc("defensive")).getValueAsString());
-			request.setAttribute("fairplay", player.getAttForDesc(myConcept.getAttributeDesc("fairplay")).getValueAsString());
-			request.setAttribute("duels", player.getAttForDesc(myConcept.getAttributeDesc("duels")).getValueAsString());
-			request.setAttribute("vitality", player.getAttForDesc(myConcept.getAttributeDesc("vitality")).getValueAsString());
-			request.setAttribute("passing", player.getAttForDesc(myConcept.getAttributeDesc("passing")).getValueAsString());
-			request.setAttribute("player_id", player.getAttForDesc(myConcept.getAttributeDesc("player_id")).getValueAsString());
-			request.setAttribute("ticker_entries", player.getAttForDesc(myConcept.getAttributeDesc("ticker_entries")).getValueAsString().split(";"));
+			request.setAttribute("first_name", player.getAttForDesc(concept.getAttributeDesc("first_name")).getValueAsString());
+			request.setAttribute("last_name", player.getAttForDesc(concept.getAttributeDesc("last_name")).getValueAsString());
+			request.setAttribute("gender", player.getAttForDesc(concept.getAttributeDesc("gender")).getValueAsString());
+			request.setAttribute("birthday", player.getAttForDesc(concept.getAttributeDesc("birthday")).getValueAsString());
+			request.setAttribute("age", player.getAttForDesc(concept.getAttributeDesc("age")).getValueAsString());
+			request.setAttribute("current_club", player.getAttForDesc(concept.getAttributeDesc("current_club")).getValueAsString());
+			request.setAttribute("preferred_position", player.getAttForDesc(concept.getAttributeDesc("preferred_position")).getValueAsString());
+			request.setAttribute("league", player.getAttForDesc(concept.getAttributeDesc("league")).getValueAsString());
+			request.setAttribute("offensive", player.getAttForDesc(concept.getAttributeDesc("offensive")).getValueAsString());
+			request.setAttribute("defensive", player.getAttForDesc(concept.getAttributeDesc("defensive")).getValueAsString());
+			request.setAttribute("fairplay", player.getAttForDesc(concept.getAttributeDesc("fairplay")).getValueAsString());
+			request.setAttribute("duels", player.getAttForDesc(concept.getAttributeDesc("duels")).getValueAsString());
+			request.setAttribute("vitality", player.getAttForDesc(concept.getAttributeDesc("vitality")).getValueAsString());
+			request.setAttribute("passing", player.getAttForDesc(concept.getAttributeDesc("passing")).getValueAsString());
+			request.setAttribute("player_id", player.getAttForDesc(concept.getAttributeDesc("player_id")).getValueAsString());
+			request.setAttribute("ticker_entries", player.getAttForDesc(concept.getAttributeDesc("ticker_entries")).getValueAsString().split(";"));
 			
 			// Dynamic button that is able to delete the player from the database
 			String buttonHtml = "<form action=DeletePlayerServlet method=post> "	

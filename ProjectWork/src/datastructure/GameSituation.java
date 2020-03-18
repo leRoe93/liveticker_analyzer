@@ -16,12 +16,9 @@ import edu.stanford.nlp.util.StringUtils;
 public class GameSituation {
 	
 	private Player actor;
-	private boolean potentialSituation;
-	private boolean processedSituation;
 	private Action action;
 	private String tickerEntry;
 	private String attributeAffection;
-	private LiveTicker liveticker;
 	
 	public GameSituation() {
 		super();
@@ -29,14 +26,10 @@ public class GameSituation {
 		this.action = new Action("", "none");
 		
 	}
-	public GameSituation(Player actor, Action action) {
+	public GameSituation(Player actor, Action action, String tickerEntry) {
 		super();
 		this.actor = actor;
 		this.action = action;
-	}
-	public GameSituation(String tickerEntry) {
-		this.potentialSituation = false;
-		this.processedSituation = false;
 		this.tickerEntry = tickerEntry;
 	}
 	public Player getActor() {
@@ -51,11 +44,18 @@ public class GameSituation {
 	public void setAction(Action action) {
 		this.action = action;
 	}
-	public void process() {
-		
-		
-		
-	} 
+	public String getTickerEntry() {
+		return tickerEntry;
+	}
+	public void setTickerEntry(String tickerEntry) {
+		this.tickerEntry = tickerEntry;
+	}
+	public String getAttributeAffection() {
+		return attributeAffection;
+	}
+	public void setAttributeAffection(String attributeAffection) {
+		this.attributeAffection = attributeAffection;
+	}
 
 	
 }

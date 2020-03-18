@@ -21,6 +21,7 @@ import de.dfki.mycbr.core.retrieval.Retrieval;
 import de.dfki.mycbr.core.retrieval.Retrieval.RetrievalMethod;
 import de.dfki.mycbr.core.similarity.Similarity;
 import de.dfki.mycbr.util.Pair;
+import utils.PathingInfo;
 
 /**
  * Servlet implementation class DeletePlayerServlet
@@ -29,8 +30,6 @@ import de.dfki.mycbr.util.Pair;
 public class DeletePlayerServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
-	private static String data_path = "/Users/tadeus/Desktop/";
-	private static String projectName = "projectwork_db.prj";
 	private final static Logger LOGGER = Logger.getLogger(DeletePlayerServlet.class);
 
        
@@ -62,15 +61,15 @@ public class DeletePlayerServlet extends HttpServlet {
 		
 		Project myproject;
 		try {
-			myproject = new Project(data_path + projectName);
+			myproject = new Project(PathingInfo.PROJECT_PATH + PathingInfo.PROJECT_NAME);
 
-			ICaseBase cb = myproject.getCB("player_cb");
+			ICaseBase cb = myproject.getCB(PathingInfo.CASE_BASE);
+			
 
 			// Necessary because it takes some time until MyCBR fully loads the project
 			while (myproject.isImporting()) {
 				Thread.sleep(1000);
 			}
-			
 			myproject.removeCase(player);
 			cb.removeCase(player);
 			
@@ -81,7 +80,8 @@ public class DeletePlayerServlet extends HttpServlet {
 			request.getRequestDispatcher("profile.jsp").forward(request, response);
 
 		} catch (Exception e) {
-			LOGGER.error("Exception occured whilst deleting player from case base: " + e.getStackTrace());
+			LOGGER.error("Exception occured whilst deleting player from case base: " + e.getMessage());
+			e.printStackTrace();
 		}
 
 	}
