@@ -17,10 +17,12 @@ import de.dfki.mycbr.core.casebase.Instance;
 import de.dfki.mycbr.core.model.AttributeDesc;
 import de.dfki.mycbr.core.model.Concept;
 import de.dfki.mycbr.core.model.IntegerDesc;
+import de.dfki.mycbr.core.model.StringDesc;
 import de.dfki.mycbr.core.model.SymbolDesc;
 import de.dfki.mycbr.core.retrieval.Retrieval;
 import de.dfki.mycbr.core.retrieval.Retrieval.RetrievalMethod;
 import de.dfki.mycbr.core.similarity.AmalgamationFct;
+import de.dfki.mycbr.core.similarity.ISimFct;
 import de.dfki.mycbr.core.similarity.Similarity;
 import de.dfki.mycbr.core.similarity.config.AmalgamationConfig;
 import de.dfki.mycbr.util.Pair;
@@ -74,7 +76,7 @@ public class QueryServlet extends HttpServlet {
 			ICaseBase cb = updatePlayerCb(myproject, concept);
 			
 			// A sorted list containing the instance with respective global similarity to the query
-			List<Pair<Instance, Similarity>> result = performRetrieval(request, concept, cb);
+			List<Pair<Instance, Similarity>> result = performRetrieval(myproject, request, concept, cb);
 
 			// Dynamic table creation for results.jsp
 			StringBuilder tableContent = generateResultTable(result, concept);
@@ -82,7 +84,7 @@ public class QueryServlet extends HttpServlet {
 			request.setAttribute("results", tableContent);
 			
 		} catch (Exception e) {	
-			LOGGER.error("An exception occured whilst opening MyCBR project or processing the query: " + e.getMessage());
+			LOGGER.error("An exception occured whilst opening MyCBR project or processing the query: " + e);
 		} 
 		
 		try {
@@ -104,7 +106,7 @@ public class QueryServlet extends HttpServlet {
 	 * @return a sorted list of results containing cases similar to the query.
 	 */
 	
-	private List<Pair<Instance, Similarity>> performRetrieval(HttpServletRequest request, Concept concept, ICaseBase cb) {
+	private List<Pair<Instance, Similarity>> performRetrieval(Project project, HttpServletRequest request, Concept concept, ICaseBase cb) {
 		// Initialize all paramaters specified by the seach form
 		int age = Integer.parseInt(request.getParameter("age"));
 		String gender = request.getParameter("gender");
@@ -120,7 +122,6 @@ public class QueryServlet extends HttpServlet {
 		
 		// Custom weighted sum function based on desired position
 		AmalgamationFct customFct = generateWeightedFct(concept, preferred_position);
-		concept.setActiveAmalgamFct(customFct);
 		
 		// Getting all the attribute descs from the concept to add attributes to the
 		// case instance
@@ -136,10 +137,51 @@ public class QueryServlet extends HttpServlet {
 		SymbolDesc leagueDesc = (SymbolDesc) concept.getAllAttributeDescs().get("league");
 		SymbolDesc positionDesc = (SymbolDesc) concept.getAllAttributeDescs().get("preferred_position");
 
+		// These attributes have to be considered for similarity
+		customFct.setActive(positionDesc, true);
+		customFct.setActive(genderDesc, true);
+		customFct.setActive(leagueDesc, true);
+		customFct.setActive(duelsDesc, true);
+		customFct.setActive(vitalityDesc, true);
+		customFct.setActive(passingDesc, true);
+		customFct.setActive(fairplayDesc, true);
+		customFct.setActive(defensiveDesc, true);
+		customFct.setActive(offensiveDesc, true);
+		customFct.setActive(ageDesc, true);
+
+		// These not
+		StringDesc playerIdDesc = (StringDesc) concept.getAttributeDesc("player_id");
+		StringDesc firstNameDesc = (StringDesc) concept.getAttributeDesc("first_name");
+		StringDesc lastNameDesc = (StringDesc) concept.getAttributeDesc("last_name");
+		StringDesc clubDesc = (StringDesc) concept.getAttributeDesc("current_club");
+		StringDesc birthdayDesc = (StringDesc) concept.getAttributeDesc("birthday");
+
+		IntegerDesc tickerCounterDesc = (IntegerDesc) concept.getAttributeDesc("ticker_counter");
+		StringDesc entryDesc = (StringDesc) concept.getAttributeDesc("ticker_entries");
+		
+		customFct.setActive(playerIdDesc, false);
+		customFct.setActive(firstNameDesc, false);
+		customFct.setActive(lastNameDesc, false);
+		customFct.setActive(clubDesc, false);
+		customFct.setActive(birthdayDesc, false);
+		customFct.setActive(tickerCounterDesc, false);
+		customFct.setActive(entryDesc, false);
+		
 		// Initialize sorted retrieval using given concept and case base
 		Retrieval ret = new Retrieval(concept, cb);
 		ret.setRetrievalMethod(RetrievalMethod.RETRIEVE_SORTED);
 		Instance query = ret.getQueryInstance();
+
+		ISimFct fctAge = ageDesc.getFct("default function");
+		ISimFct fctOff = offensiveDesc.getFct("default function");
+		ISimFct fctDef = defensiveDesc.getFct("default function");
+		ISimFct fctFair = fairplayDesc.getFct("default function");
+		ISimFct fctPass = passingDesc.getFct("default function");
+		ISimFct fctVit = vitalityDesc.getFct("default function");
+		ISimFct fctGen = genderDesc.getFct("default function");
+		ISimFct fctPos = positionDesc.getFct("default function");
+		ISimFct fctLea = leagueDesc.getFct("default function");
+		ISimFct fctDuels = duelsDesc.getFct("default function");
 
 		try {
 			// Adding attributes to the query
@@ -164,6 +206,39 @@ public class QueryServlet extends HttpServlet {
 		// Give information about used weighting to the result page for better understanding of results
 		for (AttributeDesc attDesc : query.getAttributes().keySet()) {
 			request.setAttribute(attDesc.getName(), customFct.getWeight(attDesc));
+		}
+		
+		for (Pair<Instance, Similarity> pair : ret.getResult()) {
+			String playerName = pair.getFirst().getAttForDesc(concept.getAttributeDesc("last_name")).getValueAsString() + ", " + pair.getFirst().getAttForDesc(concept.getAttributeDesc("last_name")).getValueAsString();
+			int ageCase = Integer.parseInt(pair.getFirst().getAttForDesc(concept.getAttributeDesc("age")).getValueAsString());
+			String genderCase = pair.getFirst().getAttForDesc(concept.getAttributeDesc("gender")).getValueAsString();
+			String leagueCase = pair.getFirst().getAttForDesc(concept.getAttributeDesc("league")).getValueAsString();
+			String preferred_positionCase = pair.getFirst().getAttForDesc(concept.getAttributeDesc("preferred_position")).getValueAsString();
+
+			int offensiveCase = Integer.parseInt(pair.getFirst().getAttForDesc(concept.getAttributeDesc("offensive")).getValueAsString());
+			int defensiveCase = Integer.parseInt(pair.getFirst().getAttForDesc(concept.getAttributeDesc("defensive")).getValueAsString());
+			int fairplayCase = Integer.parseInt(pair.getFirst().getAttForDesc(concept.getAttributeDesc("fairplay")).getValueAsString());
+			int passingCase = Integer.parseInt(pair.getFirst().getAttForDesc(concept.getAttributeDesc("passing")).getValueAsString());
+			int vitalityCase = Integer.parseInt(pair.getFirst().getAttForDesc(concept.getAttributeDesc("vitality")).getValueAsString());
+			int duelsCase = Integer.parseInt(pair.getFirst().getAttForDesc(concept.getAttributeDesc("duels")).getValueAsString());
+			LOGGER.info("Local similarities for player: " + playerName);
+			try {
+				LOGGER.info("Similarity for age " + age + " and " + ageCase + " is: " + fctAge.calculateSimilarity(ageDesc.getAttribute(age), ageDesc.getAttribute(ageCase)));
+				LOGGER.info("Similarity for gender " + gender + " and " + genderCase + " is: " + fctGen.calculateSimilarity(genderDesc.getAttribute(gender), genderDesc.getAttribute(genderCase)));
+				LOGGER.info("Similarity for league " + league + " and " + leagueCase + " is: " + fctLea.calculateSimilarity(leagueDesc.getAttribute(league), leagueDesc.getAttribute(leagueCase)));
+				LOGGER.info("Similarity for position " + preferred_position + " and " + preferred_positionCase + " is: " + fctPos.calculateSimilarity(positionDesc.getAttribute(preferred_position), positionDesc.getAttribute(preferred_positionCase)));
+				LOGGER.info("Similarity for offensive " + offensive + " and " + offensiveCase + " is: " + fctOff.calculateSimilarity(offensiveDesc.getAttribute(offensive), offensiveDesc.getAttribute(offensiveCase)));
+				LOGGER.info("Similarity for fairplay " +fairplay + " and " +fairplayCase + " is: " + fctFair.calculateSimilarity(fairplayDesc.getAttribute(fairplay),fairplayDesc.getAttribute(fairplayCase)));
+				LOGGER.info("Similarity for defensive " + defensive + " and " + defensiveCase + " is: " + fctDef.calculateSimilarity(defensiveDesc.getAttribute(defensive), defensiveDesc.getAttribute(defensiveCase)));
+				LOGGER.info("Similarity for duels " + duels + " and " + duelsCase + " is: " + fctDuels.calculateSimilarity(duelsDesc.getAttribute(duels), duelsDesc.getAttribute(duelsCase)));
+				LOGGER.info("Similarity for passing " + passing + " and " + passingCase + " is: " + fctPass.calculateSimilarity(passingDesc.getAttribute(passing), passingDesc.getAttribute(passingCase)));
+				LOGGER.info("Similarity for vitality " + vitality + " and " + vitalityCase + " is: " + fctVit.calculateSimilarity(vitalityDesc.getAttribute(vitality), vitalityDesc.getAttribute(vitalityCase)));
+
+
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		return ret.getResult();
@@ -207,6 +282,7 @@ public class QueryServlet extends HttpServlet {
 					+ "<button class='btn btn-success btn-link'>Zum Profil</button>"
 					+ "</form>"
 					+ "</td>");
+			
 			
 			// Iterate over attributes that have to be displayed in results
 			for (String att : resultAttributes) {
@@ -273,7 +349,7 @@ public class QueryServlet extends HttpServlet {
 	private AmalgamationFct generateWeightedFct(Concept myConcept, String position) {
 		
 		// Initialize function
-		AmalgamationFct function = new AmalgamationFct(AmalgamationConfig.WEIGHTED_SUM, myConcept, "customFunction");
+		AmalgamationFct function = myConcept.addAmalgamationFct(AmalgamationConfig.WEIGHTED_SUM, "customFunction", true);
 
 		// Getting all Attribute Descs that are relevant for the global similarity
 		IntegerDesc ageDesc = (IntegerDesc) myConcept.getAttributeDesc("age");
