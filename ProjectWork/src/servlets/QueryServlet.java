@@ -1,6 +1,7 @@
 package servlets;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -38,6 +39,7 @@ public class QueryServlet extends HttpServlet {
 	
 	private static final long serialVersionUID = 1L;
 	private final static Logger LOGGER = Logger.getLogger(QueryServlet.class);
+	private static DecimalFormat DF = new DecimalFormat("#.##");
        
     /**
      * @see HttpServlet#HttpServlet()
@@ -121,8 +123,15 @@ public class QueryServlet extends HttpServlet {
 		int duels = Integer.parseInt(request.getParameter("duels"));
 		
 		// Custom weighted sum function based on desired position
-		AmalgamationFct customFct = generateWeightedFct(concept, preferred_position);
+		concept = modifyWeightsOfAmalgamtionFct(concept, preferred_position);
 		
+		for (String desc : concept.getAllAttributeDescs().keySet()) {
+			System.out.println(desc + " is active: " + concept.getActiveAmalgamFct().isActive(concept.getAttributeDesc(desc)));
+			
+		}
+		
+		System.out.println(concept.getActiveAmalgamFct().getName());
+		System.out.println(concept.getActiveAmalgamFct().getWeight(concept.getAttributeDesc("gender")));
 		// Getting all the attribute descs from the concept to add attributes to the
 		// case instance
 		IntegerDesc ageDesc = (IntegerDesc) concept.getAttributeDesc("age");
@@ -136,42 +145,13 @@ public class QueryServlet extends HttpServlet {
 		SymbolDesc genderDesc = (SymbolDesc) concept.getAllAttributeDescs().get("gender");
 		SymbolDesc leagueDesc = (SymbolDesc) concept.getAllAttributeDescs().get("league");
 		SymbolDesc positionDesc = (SymbolDesc) concept.getAllAttributeDescs().get("preferred_position");
-
-		// These attributes have to be considered for similarity
-		customFct.setActive(positionDesc, true);
-		customFct.setActive(genderDesc, true);
-		customFct.setActive(leagueDesc, true);
-		customFct.setActive(duelsDesc, true);
-		customFct.setActive(vitalityDesc, true);
-		customFct.setActive(passingDesc, true);
-		customFct.setActive(fairplayDesc, true);
-		customFct.setActive(defensiveDesc, true);
-		customFct.setActive(offensiveDesc, true);
-		customFct.setActive(ageDesc, true);
-
-		// These not
-		StringDesc playerIdDesc = (StringDesc) concept.getAttributeDesc("player_id");
-		StringDesc firstNameDesc = (StringDesc) concept.getAttributeDesc("first_name");
-		StringDesc lastNameDesc = (StringDesc) concept.getAttributeDesc("last_name");
-		StringDesc clubDesc = (StringDesc) concept.getAttributeDesc("current_club");
-		StringDesc birthdayDesc = (StringDesc) concept.getAttributeDesc("birthday");
-
-		IntegerDesc tickerCounterDesc = (IntegerDesc) concept.getAttributeDesc("ticker_counter");
-		StringDesc entryDesc = (StringDesc) concept.getAttributeDesc("ticker_entries");
-		
-		customFct.setActive(playerIdDesc, false);
-		customFct.setActive(firstNameDesc, false);
-		customFct.setActive(lastNameDesc, false);
-		customFct.setActive(clubDesc, false);
-		customFct.setActive(birthdayDesc, false);
-		customFct.setActive(tickerCounterDesc, false);
-		customFct.setActive(entryDesc, false);
 		
 		// Initialize sorted retrieval using given concept and case base
 		Retrieval ret = new Retrieval(concept, cb);
 		ret.setRetrievalMethod(RetrievalMethod.RETRIEVE_SORTED);
+		
 		Instance query = ret.getQueryInstance();
-
+		
 		ISimFct fctAge = ageDesc.getFct("default function");
 		ISimFct fctOff = offensiveDesc.getFct("default function");
 		ISimFct fctDef = defensiveDesc.getFct("default function");
@@ -182,6 +162,7 @@ public class QueryServlet extends HttpServlet {
 		ISimFct fctPos = positionDesc.getFct("default function");
 		ISimFct fctLea = leagueDesc.getFct("default function");
 		ISimFct fctDuels = duelsDesc.getFct("default function");
+		
 
 		try {
 			// Adding attributes to the query
@@ -189,12 +170,12 @@ public class QueryServlet extends HttpServlet {
 			query.addAttribute(genderDesc, genderDesc.getAttribute(gender));
 			query.addAttribute(leagueDesc, leagueDesc.getAttribute(league));
 			query.addAttribute(positionDesc, positionDesc.getAttribute(preferred_position));
-			query.addAttribute(offensiveDesc, ageDesc.getAttribute(offensive));
-			query.addAttribute(defensiveDesc, genderDesc.getAttribute(defensive));
-			query.addAttribute(fairplayDesc, leagueDesc.getAttribute(fairplay));
-			query.addAttribute(passingDesc, ageDesc.getAttribute(passing));
-			query.addAttribute(vitalityDesc, genderDesc.getAttribute(vitality));
-			query.addAttribute(duelsDesc, leagueDesc.getAttribute(duels));
+			query.addAttribute(offensiveDesc, offensiveDesc.getAttribute(offensive));
+			query.addAttribute(defensiveDesc, defensiveDesc.getAttribute(defensive));
+			query.addAttribute(fairplayDesc, fairplayDesc.getAttribute(fairplay));
+			query.addAttribute(passingDesc, passingDesc.getAttribute(passing));
+			query.addAttribute(vitalityDesc, vitalityDesc.getAttribute(vitality));
+			query.addAttribute(duelsDesc, duelsDesc.getAttribute(duels));
 			
 		} catch (ParseException e) {
 			LOGGER.error("Cannot add attribute to the My CBR query: " + e);
@@ -205,11 +186,11 @@ public class QueryServlet extends HttpServlet {
 		
 		// Give information about used weighting to the result page for better understanding of results
 		for (AttributeDesc attDesc : query.getAttributes().keySet()) {
-			request.setAttribute(attDesc.getName(), customFct.getWeight(attDesc));
+			request.setAttribute(attDesc.getName(), concept.getActiveAmalgamFct().getWeight(attDesc));
 		}
 		
 		for (Pair<Instance, Similarity> pair : ret.getResult()) {
-			String playerName = pair.getFirst().getAttForDesc(concept.getAttributeDesc("last_name")).getValueAsString() + ", " + pair.getFirst().getAttForDesc(concept.getAttributeDesc("last_name")).getValueAsString();
+			String playerName = pair.getFirst().getAttForDesc(concept.getAttributeDesc("last_name")).getValueAsString() + ", " + pair.getFirst().getAttForDesc(concept.getAttributeDesc("first_name")).getValueAsString();
 			int ageCase = Integer.parseInt(pair.getFirst().getAttForDesc(concept.getAttributeDesc("age")).getValueAsString());
 			String genderCase = pair.getFirst().getAttForDesc(concept.getAttributeDesc("gender")).getValueAsString();
 			String leagueCase = pair.getFirst().getAttForDesc(concept.getAttributeDesc("league")).getValueAsString();
@@ -290,8 +271,9 @@ public class QueryServlet extends HttpServlet {
 			}
 
 			// Display the similarity as a humand readable percentage value
+			System.out.println(pair.getSecond().getValue());
 			double percentSim = pair.getSecond().getRoundedValue() * 100;
-			tableContent.append("<td>" + percentSim + "%</td>");
+			tableContent.append("<td>" + DF.format(percentSim) + "%</td>");
 			tableContent.append("</tr>");
 
 		}
@@ -343,13 +325,11 @@ public class QueryServlet extends HttpServlet {
 	 * 
 	 * @param myConcept the currently used concept.
 	 * @param position the desired position in the retrieval.
-	 * @return a dynamically produced AlgamationFct
+	 * @return the concept with a modifie default amalgamation function
 	 */
 	
-	private AmalgamationFct generateWeightedFct(Concept myConcept, String position) {
+	private Concept modifyWeightsOfAmalgamtionFct(Concept myConcept, String position) {
 		
-		// Initialize function
-		AmalgamationFct function = myConcept.addAmalgamationFct(AmalgamationConfig.WEIGHTED_SUM, "customFunction", true);
 
 		// Getting all Attribute Descs that are relevant for the global similarity
 		IntegerDesc ageDesc = (IntegerDesc) myConcept.getAttributeDesc("age");
@@ -365,16 +345,17 @@ public class QueryServlet extends HttpServlet {
 		SymbolDesc leagueDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("league");
 		SymbolDesc positionDesc = (SymbolDesc) myConcept.getAllAttributeDescs().get("preferred_position");
 		
+
 		// Setting static weights
-		function.setWeight(ageDesc, 20);
-		function.setWeight(genderDesc, 40);
-		function.setWeight(leagueDesc, 20);
-		function.setWeight(positionDesc, 20);
+		myConcept.getActiveAmalgamFct().setWeight(ageDesc, 20);
+		myConcept.getActiveAmalgamFct().setWeight(genderDesc, 40);
+		myConcept.getActiveAmalgamFct().setWeight(leagueDesc, 20);
+		myConcept.getActiveAmalgamFct().setWeight(positionDesc, 20);
 		
-		function.setWeight(fairplayDesc, 5);
-		function.setWeight(passingDesc, 5);
-		function.setWeight(duelsDesc, 5);
-		function.setWeight(vitalityDesc, 5);
+		myConcept.getActiveAmalgamFct().setWeight(fairplayDesc, 5);
+		myConcept.getActiveAmalgamFct().setWeight(passingDesc, 5);
+		myConcept.getActiveAmalgamFct().setWeight(duelsDesc, 5);
+		myConcept.getActiveAmalgamFct().setWeight(vitalityDesc, 5);
 		
 		int offensiveWeight = 5;
 		int defensiveWeight = 5;
@@ -398,11 +379,11 @@ public class QueryServlet extends HttpServlet {
 				LOGGER.warn("Given position: " + position + " is invalid and thus not used for weighting.");
 				
 		}
-		function.setWeight(offensiveDesc, offensiveWeight);
-		function.setWeight(defensiveDesc, defensiveWeight);
+		myConcept.getActiveAmalgamFct().setWeight(offensiveDesc, offensiveWeight);
+		myConcept.getActiveAmalgamFct().setWeight(defensiveDesc, defensiveWeight);
 
 		
-		return function;
+		return myConcept;
 	}
 
 }

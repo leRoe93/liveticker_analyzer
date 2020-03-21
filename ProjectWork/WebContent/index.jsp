@@ -72,7 +72,6 @@
 							<option value="1. Bundesliga">1. Bundesliga</option>
 							<option value="2. Bundesliga">2. Bundesliga</option>
 							<option value="3. Bundesliga">3. Bundesliga</option>
-							<option value="Regionalliga">Regionalliga</option>
 						</select>
 					</div>
 					<div class="col-md-3">
