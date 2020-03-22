@@ -124,14 +124,7 @@ public class QueryServlet extends HttpServlet {
 		
 		// Custom weighted sum function based on desired position
 		concept = modifyWeightsOfAmalgamtionFct(concept, preferred_position);
-		
-		for (String desc : concept.getAllAttributeDescs().keySet()) {
-			System.out.println(desc + " is active: " + concept.getActiveAmalgamFct().isActive(concept.getAttributeDesc(desc)));
-			
-		}
-		
-		System.out.println(concept.getActiveAmalgamFct().getName());
-		System.out.println(concept.getActiveAmalgamFct().getWeight(concept.getAttributeDesc("gender")));
+
 		// Getting all the attribute descs from the concept to add attributes to the
 		// case instance
 		IntegerDesc ageDesc = (IntegerDesc) concept.getAttributeDesc("age");
@@ -271,7 +264,6 @@ public class QueryServlet extends HttpServlet {
 			}
 
 			// Display the similarity as a humand readable percentage value
-			System.out.println(pair.getSecond().getValue());
 			double percentSim = pair.getSecond().getRoundedValue() * 100;
 			tableContent.append("<td>" + DF.format(percentSim) + "%</td>");
 			tableContent.append("</tr>");
